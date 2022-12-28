@@ -25,7 +25,7 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
             let mut buffer = Cursor::new(Vec::new());
 
             println!("Prewrite: {:?}", now.elapsed());
-            img.write_to(&mut buffer, image::ImageFormat::Png).unwrap();
+            img.write_to(&mut buffer, image::ImageFormat::from_path(path).unwrap()).unwrap();
             println!("Postwrite: {:?}", now.elapsed());
 
             println!("Prebuffer: {:?}", now.elapsed());
