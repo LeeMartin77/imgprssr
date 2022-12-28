@@ -3,18 +3,33 @@ use std::net::SocketAddr;
 
 
 use std::fs::File;
+use std::io::Read;
 //use std::io::prelude::*;
 use std::path::Path;
 //use std::error::Error;
 
-use hyper::{Body, Request, Response, Server};
+use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
 
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let raw_path = format!("./images{}", req.uri().path());
     let path = Path::new(&raw_path);
-    let file = File::open(&path);
-    Ok(Response::new(format!("Hello {}", if file.is_ok() {"found"} else {"notfound"}).into()))
+    let file_res = File::open(&path);
+    match file_res {
+        Ok(mut file) => {
+            let mut buff = vec![];
+            file.read_to_end(&mut buff).unwrap();
+            Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(buff.into()).unwrap().into())
+        },
+        Err(_) => {
+            Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("Not Found".into()).unwrap().into())
+        }
+    }
+    
 }
 
 #[tokio::main]
