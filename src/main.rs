@@ -1,37 +1,15 @@
 use std::convert::Infallible;
-use std::io::{Cursor, Read};
 use std::net::SocketAddr;
 use std::path::Path;
 
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
-use image::DynamicImage;
-use parameters::ImageParameters;
 mod parameters;
-
-fn process_image(mut img: DynamicImage, img_format: image::ImageFormat, params: ImageParameters) -> Vec<u8> {
-    let mut buffer = Cursor::new(Vec::new());
-
-    if let Some(w) = params.width {
-        let source_width = img.width();
-        if source_width != w {
-            let width_factor = source_width as f32 / w as f32;
-            let nheight = img.height() as f32 * width_factor;
-            img = img.resize(w, nheight as u32, image::imageops::FilterType::Nearest);
-        }
-    }
-
-    img.write_to(&mut buffer, img_format).unwrap();
-
-    let mut out = Vec::new();
-    buffer.set_position(0);
-    buffer.read_to_end(&mut out).unwrap();
-    out
-}
+mod process;
 
 async fn handle_image_request(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let target_path = req.uri().path();
-    let params_res: Result<ImageParameters, _> = req.uri().query().unwrap_or("").parse();
+    let params_res: Result<parameters::ImageParameters, _> = req.uri().query().unwrap_or("").parse();
     if params_res.is_err() {
         return Ok(Response::builder()
         .status(StatusCode::BAD_REQUEST)
@@ -49,7 +27,7 @@ async fn handle_image_request(req: Request<Body>) -> Result<Response<Body>, Infa
             let img_format = image::ImageFormat::from_path(path).unwrap();
             Ok(Response::builder()
                 .status(StatusCode::OK)
-                .body(process_image(img, img_format, params).into()).unwrap())
+                .body(process::process_image_to_buffer(img, img_format, params).into()).unwrap())
         },
         Err(_) => {
             Ok(Response::builder()
