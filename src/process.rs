@@ -17,7 +17,7 @@ pub fn process_image(mut img: DynamicImage, params: crate::parameters::ImagePara
       if source_width != w {
           let width_factor = source_width as f32 / w as f32;
           let nheight = img.height() as f32 * width_factor;
-          img = img.resize(w, nheight as u32, image::imageops::FilterType::Nearest);
+          img = img.resize(w, nheight as u32, params.scaling_filter);
       }
   }
   img
