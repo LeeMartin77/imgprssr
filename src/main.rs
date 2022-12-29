@@ -2,6 +2,11 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::Path;
 
+use signal_hook::consts::signal::*;
+use signal_hook_tokio::Signals;
+
+use futures::stream::StreamExt;
+
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
 mod parameters;
@@ -44,16 +49,34 @@ fn validate_request(req: Request<Body>) -> Result<(image::DynamicImage, image::I
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), std::io::Error> {
+    let mut signals = Signals::new(&[
+        SIGTERM,
+        SIGINT,
+        SIGQUIT,
+    ])?;
+
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 
     let make_svc = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(handle_image_request))
     });
 
-    let server = Server::bind(&addr).serve(make_svc);
+    let server = Server::bind(&addr)
+        .serve(make_svc)
+        .with_graceful_shutdown(async {
+            while let Some(signal) = signals.next().await {
+                match signal {
+                    SIGTERM | SIGINT | SIGQUIT => {
+                        return ();
+                    },
+                    _ => unreachable!(),
+                }
+            }
+        });
 
     if let Err(e) = server.await {
         eprintln!("server error: {}", e);
     }
+    Ok(())
 }
