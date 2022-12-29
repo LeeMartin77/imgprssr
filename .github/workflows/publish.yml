@@ -25,7 +25,7 @@ jobs:
         working-directory: .
         run: |
           sudo apt install qemu-user-static
-          platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
+          platarch=linux/arm64/v8,linux/amd64
           podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} .
 
       - name: Push Version
