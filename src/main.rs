@@ -25,11 +25,8 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     }
     let raw_path = format!("./images{}", target_path);
     let path = Path::new(&raw_path);
-    let now = Instant::now();
     
-    println!("Preload: {:?}", now.elapsed());
     let img_res = image::open(path);
-    println!("Postload: {:?}", now.elapsed());
 
     match img_res {
         Ok(mut img) => {
@@ -49,15 +46,11 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
                 }
             }
 
-            println!("Prewrite: {:?}", now.elapsed());
             img.write_to(&mut buffer, image::ImageFormat::from_path(path).unwrap()).unwrap();
-            println!("Postwrite: {:?}", now.elapsed());
 
-            println!("Prebuffer: {:?}", now.elapsed());
             let mut out = Vec::new();
             buffer.set_position(0);
             buffer.read_to_end(&mut out).unwrap();
-            println!("Postbuffer: {:?}", now.elapsed());
 
             Ok(Response::builder()
             .status(StatusCode::OK)
