@@ -1,5 +1,7 @@
 use std::{str::FromStr, collections::HashMap};
 
+pub const DEFAULT_FILTER: image::imageops::FilterType = image::imageops::FilterType::Nearest;
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum ImageParameterParseError {
@@ -9,7 +11,8 @@ pub enum ImageParameterParseError {
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub struct ImageParameters {
-  pub width: Option<u32>
+  pub width: Option<u32>,
+  pub scaling_filter: image::imageops::FilterType
 }
 
 impl FromStr for ImageParameters {
@@ -18,6 +21,8 @@ impl FromStr for ImageParameters {
     fn from_str(string: &str) -> Result<Self, Self::Err> {
       let query_parts = string.split("&");
       let mut params: HashMap<&str, &str> = HashMap::new();
+
+      let mut filter = DEFAULT_FILTER;
 
       for q in query_parts {
           let mut prts = q.split("=").into_iter();
@@ -30,11 +35,17 @@ impl FromStr for ImageParameters {
         Some(num_string) => {
           let num_parsed: Result<u32, _> = num_string.parse();
           match num_parsed {
-            Ok(num) => Ok(ImageParameters { width: Some(num) }),
+            Ok(num) => Ok(ImageParameters { 
+              width: Some(num), 
+              scaling_filter: filter 
+            }),
             Err(_) => Err(ImageParameterParseError::WidthParseError),
         }
         },
-        None => Ok(ImageParameters { width: None }),
+        None => Ok(ImageParameters { 
+          width: None, 
+          scaling_filter: filter 
+        }),
       }
     }
 }
@@ -46,7 +57,10 @@ mod tests {
   #[test]
   fn it_works() {
     let test: ImageParameters = "".parse().unwrap();
-    assert_eq!(test, ImageParameters { width: None });
+    assert_eq!(test, ImageParameters { 
+      width: None, 
+      scaling_filter: DEFAULT_FILTER
+    });
   }
 
   #[test]
@@ -54,7 +68,10 @@ mod tests {
     let cases = [100_u32, 100, 200, 300, 400, 500, 600];
     for width in cases {
       let test: ImageParameters = format!("width={}", width).parse().unwrap();
-      assert_eq!(test, ImageParameters { width: Some(width) });
+      assert_eq!(test, ImageParameters { 
+        width: Some(width), 
+        scaling_filter: DEFAULT_FILTER
+      });
     }
   }
 

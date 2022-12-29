@@ -28,7 +28,7 @@ pub fn process_image(mut img: DynamicImage, params: crate::parameters::ImagePara
 mod tests {
   use std::path::Path;
 
-  use crate::parameters::ImageParameters;
+  use crate::parameters::{ImageParameters, DEFAULT_FILTER};
 
   use super::*;
 
@@ -37,7 +37,7 @@ mod tests {
   #[test]
   fn no_params_doesnt_manipulate_image() {
     let img = image::open(Path::new(TEST_IMAGE_PATH)).unwrap();
-    let params = ImageParameters { width: None };
+    let params = ImageParameters { width: None, scaling_filter: DEFAULT_FILTER };
     let cloned_image = img.clone();
     assert_eq!(process_image(img, params), cloned_image);
   }
@@ -49,7 +49,7 @@ mod tests {
     let cases = [[200_u32, 100], [300_u32, 150], [600_u32, 300]];
     for case in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: Some(case[0]) };
+      let params = ImageParameters { width: Some(case[0]), scaling_filter: DEFAULT_FILTER };
       let processed = process_image(img, params);
       assert_eq!(processed.width(), case[0]);
       assert_eq!(processed.height(), case[1]);
