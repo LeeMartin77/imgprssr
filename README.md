@@ -3,7 +3,7 @@
 Running the image:
 
 ```bash
-podman run --rm -it -v ./images:/images -p 3000:3000 imgprssr
+podman run --rm -it -v ./images:/images -p 3000:3000 ghcr.io/leemartin77/imgprssr
 ```
 
 ## Credits
