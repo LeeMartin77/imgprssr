@@ -30,23 +30,20 @@ impl FromStr for ImageParameters {
           let val = prts.next().unwrap_or("true");
           params.insert(key, val);
       }
-      let width = params.get("width");
-      match width {
-        Some(num_string) => {
-          let num_parsed: Result<u32, _> = num_string.parse();
-          match num_parsed {
-            Ok(num) => Ok(ImageParameters { 
-              width: Some(num), 
-              scaling_filter: filter 
-            }),
-            Err(_) => Err(ImageParameterParseError::WidthParseError),
+
+      let mut width = None;
+      if let Some(num_string) = params.get("width") {
+        if let Ok(num) = num_string.parse::<u32>() {
+          width = Some(num);
+        } else {
+          return Err(ImageParameterParseError::WidthParseError);
         }
-        },
-        None => Ok(ImageParameters { 
-          width: None, 
-          scaling_filter: filter 
-        }),
       }
+      
+      Ok(ImageParameters { 
+        width: width, 
+        scaling_filter: filter 
+      })
     }
 }
 
