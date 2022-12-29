@@ -1,28 +1,16 @@
-use std::collections::HashMap;
 use std::convert::Infallible;
+use std::io::{Cursor, Read};
 use std::net::SocketAddr;
-
-use std::io::{Read, Cursor};
-//use std::io::prelude::*;
 use std::path::Path;
-use std::time::Instant;
-//use std::error::Error;
 
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
+use parameters::ImageParameters;
+mod parameters;
 
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let target_path = req.uri().path();
-    let query_string = req.uri().query().unwrap_or("");
-    let query_parts = query_string.split("&");
-    let mut params: HashMap<&str, &str> = HashMap::new();
-
-    for q in query_parts {
-        let mut prts = q.split("=").into_iter();
-        let key = prts.next().unwrap();
-        let val = prts.next().unwrap_or("true");
-        params.insert(key, val);
-    }
+    
     let raw_path = format!("./images{}", target_path);
     let path = Path::new(&raw_path);
     
@@ -31,19 +19,21 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     match img_res {
         Ok(mut img) => {
             let mut buffer = Cursor::new(Vec::new());
+            let params_res: Result<ImageParameters, _> = req.uri().query().unwrap_or("").parse();
 
-            let width = params.get("width");
-
-            if let Some(w) = width {
-                let wir: Result<u32, _> = w.parse();
-                let source_width = img.width();
-                if let Ok(width_int) = wir  { 
-                    if source_width != width_int {
-                        let width_factor = source_width as f32 / width_int as f32;
+            if let Ok(params) = params_res {
+                if let Some(w) = params.width {
+                    let source_width = img.width();
+                    if source_width != w {
+                        let width_factor = source_width as f32 / w as f32;
                         let nheight = img.height() as f32 * width_factor;
-                        img = img.resize(width_int, nheight as u32, image::imageops::FilterType::Nearest);
+                        img = img.resize(w, nheight as u32, image::imageops::FilterType::Nearest);
                     }
                 }
+            } else {
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body("Bad Request".into()).unwrap().into())
             }
 
             img.write_to(&mut buffer, image::ImageFormat::from_path(path).unwrap()).unwrap();
@@ -53,13 +43,13 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
             buffer.read_to_end(&mut out).unwrap();
 
             Ok(Response::builder()
-            .status(StatusCode::OK)
-            .body(out.into()).unwrap())
+                .status(StatusCode::OK)
+                .body(out.into()).unwrap())
         },
         Err(_) => {
             Ok(Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body("Not Found".into()).unwrap().into())
+                .status(StatusCode::NOT_FOUND)
+                .body("Not Found".into()).unwrap().into())
         }
     }
     
