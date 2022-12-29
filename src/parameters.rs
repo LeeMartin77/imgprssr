@@ -5,7 +5,8 @@ pub const DEFAULT_FILTER: image::imageops::FilterType = image::imageops::FilterT
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum ImageParameterParseError {
-  WidthParseError
+  WidthParseError,
+  FilterParseError
 }
 
 #[derive(Debug)]
@@ -39,7 +40,18 @@ impl FromStr for ImageParameters {
           return Err(ImageParameterParseError::WidthParseError);
         }
       }
-      
+
+      if let Some(filter_string) = params.get("filter") {
+        match filter_string {
+            &"nearest" => filter = image::imageops::FilterType::Nearest,
+            &"gaussian" => filter = image::imageops::FilterType::Gaussian,
+            &"catmullrom" => filter = image::imageops::FilterType::CatmullRom,
+            &"lanczos3" => filter = image::imageops::FilterType::Lanczos3,
+            &"triangle" => filter = image::imageops::FilterType::Triangle,
+            _ => return Err(ImageParameterParseError::FilterParseError)
+        }
+      }
+
       Ok(ImageParameters { 
         width: width, 
         scaling_filter: filter 
@@ -70,6 +82,31 @@ mod tests {
         scaling_filter: DEFAULT_FILTER
       });
     }
+  }
+
+  #[test]
+  fn parses_filters() {
+    let cases = [
+      (image::imageops::FilterType::Nearest, "nearest"),
+      (image::imageops::FilterType::Gaussian, "gaussian"),
+      (image::imageops::FilterType::CatmullRom, "catmullrom"),
+      (image::imageops::FilterType::Lanczos3, "lanczos3"),
+      (image::imageops::FilterType::Triangle, "triangle")
+    ];
+    for (filter_type, filter_string) in cases {
+      let test: ImageParameters = format!("filter={}", filter_string).parse().unwrap();
+      assert_eq!(test, ImageParameters { 
+        width: None, 
+        scaling_filter: filter_type
+      });
+    }
+  }
+
+
+  #[test]
+  fn non_existent_filter_returns_error() {
+    let test: Result<ImageParameters, ImageParameterParseError> = "filter=notreal".parse();
+    assert_eq!(test, Err(ImageParameterParseError::FilterParseError));
   }
 
   #[test]
