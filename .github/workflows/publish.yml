@@ -1,0 +1,37 @@
+name: Publish Container
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  test-and-build:
+    uses: ./.github/workflows/test.yml
+
+  publish:
+    needs:
+      - test-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to GHCR
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Publish the Container image
+        working-directory: .
+        run: |
+          sudo apt install qemu-user-static
+          platarch=linux/arm/v7,linux/arm64/v8,linux/amd64
+          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} .
+
+      - name: Push Version
+        run: podman manifest push ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }}
+
+      - name: Push Latest
+        run: |
+          podman tag ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:latest
+          podman manifest push ghcr.io/leemartin77/imgprssr:latest ghcr.io/leemartin77/imgprssr:latest
