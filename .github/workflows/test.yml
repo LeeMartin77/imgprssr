@@ -1,0 +1,48 @@
+name: Test and Build
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # run at 2 AM UTC
+  push:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "Containerfile"
+      - ".containerignore"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - .github/workflows/test.yml
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "Containerfile"
+      - ".containerignore"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - .github/workflows/test.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: cargo test --verbose
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: cargo build --verbose
+
+  container:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: podman build -t imgprssrtest .
+      # Could add some e2e tests here
