@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::Path;
 
+use appconfig::ImgprssrConfig;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 
@@ -11,8 +12,9 @@ use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
 mod parameters;
 mod process;
+mod appconfig;
 
-async fn handle_image_request(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn handle_image_request(_settings: ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let validated = validate_request(req);
     match validated {
         Ok((img, img_format, params)) => Ok(Response::builder()
@@ -56,10 +58,17 @@ async fn main() -> Result<(), std::io::Error> {
         SIGQUIT,
     ])?;
 
+    let settings: ImgprssrConfig = appconfig::generate_app_config().unwrap();
+    
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 
-    let make_svc = make_service_fn(|_conn| async {
-        Ok::<_, Infallible>(service_fn(handle_image_request))
+    let make_svc = make_service_fn(move |_conn| {
+        let settings = settings.clone();
+        let mvd_fn = move |req| {
+            let settings = settings.clone();
+            handle_image_request(settings, req)
+        };
+        async move { Ok::<_, Infallible>(service_fn(mvd_fn)) }
     });
 
     let server = Server::bind(&addr)
