@@ -14,12 +14,12 @@ mod process;
 mod appconfig;
 mod source;
 
-async fn handle_image_request(_settings: ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let sourced = source::get_source_image(req);
+async fn handle_image_request(settings: ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let sourced = source::get_source_image(&settings, req);
     match sourced {
         Ok((img, img_format, params)) => Ok(Response::builder()
             .status(StatusCode::OK)
-            .body(process::process_image_to_buffer(img, img_format, params).into()).unwrap()),
+            .body(process::process_image_to_buffer(&settings, img, img_format, params).into()).unwrap()),
         Err(err_res) => Ok(err_res),
     }
 }

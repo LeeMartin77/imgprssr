@@ -2,9 +2,9 @@ use std::path::Path;
 
 use hyper::{Request, Body, Response, StatusCode};
 
-use crate::parameters;
+use crate::{parameters, appconfig::ImgprssrConfig};
 
-pub fn get_source_image(req: Request<Body>) -> Result<(image::DynamicImage, image::ImageFormat, parameters::ImageParameters), Response<Body>> {
+pub fn get_source_image(_settings: &ImgprssrConfig, req: Request<Body>) -> Result<(image::DynamicImage, image::ImageFormat, parameters::ImageParameters), Response<Body>> {
   let target_path = req.uri().path();
   let params_res: Result<parameters::ImageParameters, _> = req.uri().query().unwrap_or("").parse();
   if params_res.is_err() {

@@ -1,7 +1,9 @@
 use std::io::{Cursor, Read};
 use image::DynamicImage;
 
-pub fn process_image_to_buffer(mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
+use crate::appconfig::ImgprssrConfig;
+
+pub fn process_image_to_buffer(_settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
   img = process_image(img, params);
   let mut buffer = Cursor::new(Vec::new());
   img.write_to(&mut buffer, img_format).unwrap();
