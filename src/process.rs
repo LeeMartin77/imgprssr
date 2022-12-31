@@ -1,7 +1,7 @@
 use std::io::{Cursor, Read};
 use image::DynamicImage;
 
-use crate::appconfig::ImgprssrConfig;
+use crate::{appconfig::ImgprssrConfig, parameters::OversizedImageHandling};
 
 pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
   img = process_image(settings, img, params);
@@ -15,13 +15,14 @@ pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage,
 
 pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: crate::parameters::ImageParameters) -> DynamicImage {
   let scaling_filter = if let Some(flt) = params.scaling_filter { flt } else { settings.default_filter };
+  let oversize_handling = if let Some(os) = params.oversized_handling { os } else { settings.default_oversize_handling };
   if let Some(w) = params.width {
-      let source_width = img.width();
-      if source_width != w {
-          let width_factor = source_width as f32 / w as f32;
-          let nheight = img.height() as f32 * width_factor;
-          img = img.resize(w, nheight as u32, scaling_filter);
-      }
+    let source_width = img.width();
+    if oversize_handling == OversizedImageHandling::Clamp && source_width > w {
+      let width_factor = source_width as f32 / w as f32;
+      let nheight = img.height() as f32 * width_factor;
+      img = img.resize(w, nheight as u32, scaling_filter);
+    }
   }
   img
 }

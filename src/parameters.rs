@@ -11,6 +11,7 @@ pub enum ImageParameterParseError {
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
+#[derive(Copy)]
 pub enum OversizedImageHandling {
   Clamp
 }
