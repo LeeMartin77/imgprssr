@@ -10,7 +10,15 @@ pub enum ImgprssrConfigErr {
 
 #[derive(Clone)]
 pub struct ImgprssrConfig {
+  pub default_filter: image::imageops::FilterType
+}
 
+impl ImgprssrConfig {
+  pub fn default() -> ImgprssrConfig {
+    ImgprssrConfig {
+      default_filter: image::imageops::FilterType::Nearest
+    }
+  }
 }
 
 pub fn generate_app_config() -> Result<ImgprssrConfig, ImgprssrConfigErr> {
@@ -25,7 +33,6 @@ pub fn generate_app_config() -> Result<ImgprssrConfig, ImgprssrConfigErr> {
 
 // Really need to look at how to do this with a trait
 fn from_hashmap(_hmp: std::collections::HashMap<String, String>) -> Result<ImgprssrConfig, ImgprssrConfigErr> {
-  Ok(ImgprssrConfig {
-
-  })
+  let config = ImgprssrConfig::default();
+  Ok(config)
 }

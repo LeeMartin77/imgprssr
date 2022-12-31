@@ -1,7 +1,5 @@
 use std::{str::FromStr, collections::HashMap};
 
-pub const DEFAULT_FILTER: image::imageops::FilterType = image::imageops::FilterType::Nearest;
-
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum ImageParameterParseError {
@@ -13,7 +11,18 @@ pub enum ImageParameterParseError {
 #[derive(PartialEq)]
 pub struct ImageParameters {
   pub width: Option<u32>,
-  pub scaling_filter: image::imageops::FilterType
+  pub scaling_filter: Option<image::imageops::FilterType>
+}
+
+pub fn str_to_filter(filter_string: &str) -> Result<image::imageops::FilterType, ImageParameterParseError> {
+  match filter_string {
+    "nearest" => Ok(image::imageops::FilterType::Nearest),
+    "gaussian" => Ok(image::imageops::FilterType::Gaussian),
+    "catmullrom" => Ok(image::imageops::FilterType::CatmullRom),
+    "lanczos3" => Ok(image::imageops::FilterType::Lanczos3),
+    "triangle" => Ok(image::imageops::FilterType::Triangle),
+    _ => Err(ImageParameterParseError::FilterParseError)
+}
 }
 
 impl FromStr for ImageParameters {
@@ -23,7 +32,7 @@ impl FromStr for ImageParameters {
       let query_parts = string.split("&");
       let mut params: HashMap<&str, &str> = HashMap::new();
 
-      let mut filter = DEFAULT_FILTER;
+      let mut filter = None;
 
       for q in query_parts {
           let mut prts = q.split("=").into_iter();
@@ -42,13 +51,9 @@ impl FromStr for ImageParameters {
       }
 
       if let Some(filter_string) = params.get("filter") {
-        match filter_string {
-            &"nearest" => filter = image::imageops::FilterType::Nearest,
-            &"gaussian" => filter = image::imageops::FilterType::Gaussian,
-            &"catmullrom" => filter = image::imageops::FilterType::CatmullRom,
-            &"lanczos3" => filter = image::imageops::FilterType::Lanczos3,
-            &"triangle" => filter = image::imageops::FilterType::Triangle,
-            _ => return Err(ImageParameterParseError::FilterParseError)
+        match str_to_filter(filter_string) {
+            Ok(flt) => filter = Some(flt),
+            Err(err) => return Err(err),
         }
       }
 
@@ -68,7 +73,7 @@ mod tests {
     let test: ImageParameters = "".parse().unwrap();
     assert_eq!(test, ImageParameters { 
       width: None, 
-      scaling_filter: DEFAULT_FILTER
+      scaling_filter: None
     });
   }
 
@@ -79,7 +84,7 @@ mod tests {
       let test: ImageParameters = format!("width={}", width).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: Some(width), 
-        scaling_filter: DEFAULT_FILTER
+        scaling_filter: None
       });
     }
   }
@@ -97,7 +102,7 @@ mod tests {
       let test: ImageParameters = format!("filter={}", filter_string).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: None, 
-        scaling_filter: filter_type
+        scaling_filter: Some(filter_type)
       });
     }
   }

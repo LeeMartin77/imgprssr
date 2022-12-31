@@ -3,8 +3,8 @@ use image::DynamicImage;
 
 use crate::appconfig::ImgprssrConfig;
 
-pub fn process_image_to_buffer(_settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
-  img = process_image(img, params);
+pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
+  img = process_image(settings, img, params);
   let mut buffer = Cursor::new(Vec::new());
   img.write_to(&mut buffer, img_format).unwrap();
   let mut out = Vec::new();
@@ -13,13 +13,14 @@ pub fn process_image_to_buffer(_settings: &ImgprssrConfig, mut img: DynamicImage
   out
 }
 
-pub fn process_image(mut img: DynamicImage, params: crate::parameters::ImageParameters) -> DynamicImage {
+pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: crate::parameters::ImageParameters) -> DynamicImage {
+  let scaling_filter = if let Some(flt) = params.scaling_filter { flt } else { settings.default_filter };
   if let Some(w) = params.width {
       let source_width = img.width();
       if source_width != w {
           let width_factor = source_width as f32 / w as f32;
           let nheight = img.height() as f32 * width_factor;
-          img = img.resize(w, nheight as u32, params.scaling_filter);
+          img = img.resize(w, nheight as u32, scaling_filter);
       }
   }
   img
@@ -30,7 +31,7 @@ pub fn process_image(mut img: DynamicImage, params: crate::parameters::ImagePara
 mod tests {
   use std::path::Path;
 
-  use crate::parameters::{ImageParameters, DEFAULT_FILTER};
+  use crate::parameters::{ImageParameters};
 
   use super::*;
 
@@ -39,9 +40,9 @@ mod tests {
   #[test]
   fn no_params_doesnt_manipulate_image() {
     let img = image::open(Path::new(TEST_IMAGE_PATH)).unwrap();
-    let params = ImageParameters { width: None, scaling_filter: DEFAULT_FILTER };
+    let params = ImageParameters { width: None, scaling_filter: None };
     let cloned_image = img.clone();
-    assert_eq!(process_image(img, params), cloned_image);
+    assert_eq!(process_image(&ImgprssrConfig::default(), img, params), cloned_image);
   }
 
 
@@ -51,8 +52,8 @@ mod tests {
     let cases = [[200_u32, 100], [300_u32, 150], [600_u32, 300]];
     for case in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: Some(case[0]), scaling_filter: DEFAULT_FILTER };
-      let processed = process_image(img, params);
+      let params = ImageParameters { width: Some(case[0]), scaling_filter: None };
+      let processed = process_image(&ImgprssrConfig::default(), img, params);
       assert_eq!(processed.width(), case[0]);
       assert_eq!(processed.height(), case[1]);
     }
