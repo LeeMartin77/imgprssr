@@ -4,14 +4,34 @@ use std::{str::FromStr, collections::HashMap};
 #[derive(PartialEq)]
 pub enum ImageParameterParseError {
   WidthParseError,
-  FilterParseError
+  FilterParseError,
+  OversizeParseError
+}
+
+#[derive(Debug)]
+#[derive(PartialEq)]
+#[derive(Clone)]
+pub enum OversizedImageHandling {
+  Clamp
+}
+
+impl FromStr for OversizedImageHandling {
+    type Err = std::fmt::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "clamp" => Ok(OversizedImageHandling::Clamp),
+            _ => Err(std::fmt::Error)
+        }
+    }
 }
 
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub struct ImageParameters {
   pub width: Option<u32>,
-  pub scaling_filter: Option<image::imageops::FilterType>
+  pub scaling_filter: Option<image::imageops::FilterType>,
+  pub oversized_handling: Option<OversizedImageHandling>
 }
 
 pub fn str_to_filter(filter_string: &str) -> Result<image::imageops::FilterType, ImageParameterParseError> {
@@ -32,7 +52,11 @@ impl FromStr for ImageParameters {
       let query_parts = string.split("&");
       let mut params: HashMap<&str, &str> = HashMap::new();
 
-      let mut filter = None;
+      let mut img_params = ImageParameters { 
+        width: None, 
+        scaling_filter: None,
+        oversized_handling: None
+      };
 
       for q in query_parts {
           let mut prts = q.split("=").into_iter();
@@ -41,26 +65,30 @@ impl FromStr for ImageParameters {
           params.insert(key, val);
       }
 
-      let mut width = None;
       if let Some(num_string) = params.get("width") {
         if let Ok(num) = num_string.parse::<u32>() {
-          width = Some(num);
+          img_params.width = Some(num);
         } else {
           return Err(ImageParameterParseError::WidthParseError);
         }
       }
 
+      if let Some(stng) = params.get("oversizehandling") {
+        if let Ok(val) = stng.parse::<OversizedImageHandling>() {
+          img_params.oversized_handling = Some(val);
+        } else {
+          return Err(ImageParameterParseError::OversizeParseError);
+        }
+      }
+
       if let Some(filter_string) = params.get("filter") {
         match str_to_filter(filter_string) {
-            Ok(flt) => filter = Some(flt),
+            Ok(flt) => img_params.scaling_filter = Some(flt),
             Err(err) => return Err(err),
         }
       }
 
-      Ok(ImageParameters { 
-        width: width, 
-        scaling_filter: filter 
-      })
+      Ok(img_params)
     }
 }
 
@@ -73,7 +101,8 @@ mod tests {
     let test: ImageParameters = "".parse().unwrap();
     assert_eq!(test, ImageParameters { 
       width: None, 
-      scaling_filter: None
+      scaling_filter: None,
+      oversized_handling: None
     });
   }
 
@@ -84,7 +113,8 @@ mod tests {
       let test: ImageParameters = format!("width={}", width).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: Some(width), 
-        scaling_filter: None
+        scaling_filter: None,
+        oversized_handling: None
       });
     }
   }
@@ -102,11 +132,37 @@ mod tests {
       let test: ImageParameters = format!("filter={}", filter_string).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: None, 
-        scaling_filter: Some(filter_type)
+        scaling_filter: Some(filter_type),
+        oversized_handling: None
       });
     }
   }
 
+  #[test]
+  fn parses_oversize_handling() {
+    let cases = [
+      (OversizedImageHandling::Clamp, "clamp"),
+    ];
+    for (filter_type, filter_string) in cases {
+      let test: ImageParameters = format!("oversizehandling={}", filter_string).parse().unwrap();
+      assert_eq!(test, ImageParameters { 
+        width: None, 
+        scaling_filter: None,
+        oversized_handling: Some(filter_type)
+      });
+    }
+  }
+
+  #[test]
+  fn errors_oversize_handling() {
+    let cases = [
+      "akmdsas",
+    ];
+    for filter_string in cases {
+      let test: Result<ImageParameters, ImageParameterParseError> = format!("oversizehandling={}", filter_string).parse();
+      assert_eq!(test, Err(ImageParameterParseError::OversizeParseError));
+    }
+  }
 
   #[test]
   fn non_existent_filter_returns_error() {

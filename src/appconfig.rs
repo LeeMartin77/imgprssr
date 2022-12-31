@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use config::Config;
 
-use crate::parameters::str_to_filter;
+use crate::parameters::{str_to_filter, OversizedImageHandling};
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -14,13 +14,15 @@ pub enum ImgprssrConfigErr {
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub struct ImgprssrConfig {
-  pub default_filter: image::imageops::FilterType
+  pub default_filter: image::imageops::FilterType,
+  pub default_oversize_handling: OversizedImageHandling
 }
 
 impl ImgprssrConfig {
   pub fn default() -> ImgprssrConfig {
     ImgprssrConfig {
-      default_filter: image::imageops::FilterType::Nearest
+      default_filter: image::imageops::FilterType::Nearest,
+      default_oversize_handling: OversizedImageHandling::Clamp
     }
   }
 }
