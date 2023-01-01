@@ -13,7 +13,7 @@ pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage,
   out
 }
 
-pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: crate::parameters::ImageParameters) -> DynamicImage {
+fn resize_single_edge(settings: &ImgprssrConfig, mut img: DynamicImage, params: &crate::parameters::ImageParameters) -> DynamicImage {
   let scaling_filter = if let Some(flt) = params.scaling_filter { flt } else { settings.default_filter };
   let oversize_handling = if let Some(os) = params.oversized_handling { os } else { settings.default_oversize_handling };
   if let Some(w) = params.width {
@@ -31,6 +31,13 @@ pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: c
       let nwidth = img.width() as f32 * height_factor;
       img = img.resize(nwidth as u32, h, scaling_filter);
     }
+  }
+  img
+}
+
+pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: crate::parameters::ImageParameters) -> DynamicImage {
+  if (params.height.is_some() || params.width.is_some()) && !(params.height.is_some() && params.width.is_some()) {
+    img = resize_single_edge(settings, img, &params);
   }
   img
 }
