@@ -41,7 +41,7 @@ mod tests {
   #[test]
   fn no_params_doesnt_manipulate_image() {
     let img = image::open(Path::new(TEST_IMAGE_PATH)).unwrap();
-    let params = ImageParameters { width: None, scaling_filter: None, oversized_handling: None };
+    let params = ImageParameters { width: None, height: None, scaling_filter: None, oversized_handling: None };
     let cloned_image = img.clone();
     assert_eq!(process_image(&ImgprssrConfig::default(), img, params), cloned_image);
   }
@@ -53,7 +53,7 @@ mod tests {
     let cases = [[200_u32, 100], [300_u32, 150], [600_u32, 300]];
     for case in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: Some(case[0]), scaling_filter: None, oversized_handling: None };
+      let params = ImageParameters { width: Some(case[0]), height: None, scaling_filter: None, oversized_handling: None };
       let processed = process_image(&ImgprssrConfig::default(), img, params);
       assert_eq!(processed.width(), case[0]);
       assert_eq!(processed.height(), case[1]);

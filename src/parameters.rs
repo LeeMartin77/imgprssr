@@ -4,6 +4,7 @@ use std::{str::FromStr, collections::HashMap};
 #[derive(PartialEq)]
 pub enum ImageParameterParseError {
   WidthParseError,
+  HeightParseError,
   FilterParseError,
   OversizeParseError
 }
@@ -31,6 +32,7 @@ impl FromStr for OversizedImageHandling {
 #[derive(PartialEq)]
 pub struct ImageParameters {
   pub width: Option<u32>,
+  pub height: Option<u32>,
   pub scaling_filter: Option<image::imageops::FilterType>,
   pub oversized_handling: Option<OversizedImageHandling>
 }
@@ -55,6 +57,7 @@ impl FromStr for ImageParameters {
 
       let mut img_params = ImageParameters { 
         width: None, 
+        height: None,
         scaling_filter: None,
         oversized_handling: None
       };
@@ -71,6 +74,14 @@ impl FromStr for ImageParameters {
           img_params.width = Some(num);
         } else {
           return Err(ImageParameterParseError::WidthParseError);
+        }
+      }
+
+      if let Some(num_string) = params.get("height") {
+        if let Ok(num) = num_string.parse::<u32>() {
+          img_params.height = Some(num);
+        } else {
+          return Err(ImageParameterParseError::HeightParseError);
         }
       }
 
@@ -102,6 +113,7 @@ mod tests {
     let test: ImageParameters = "".parse().unwrap();
     assert_eq!(test, ImageParameters { 
       width: None, 
+      height: None,
       scaling_filter: None,
       oversized_handling: None
     });
@@ -114,11 +126,45 @@ mod tests {
       let test: ImageParameters = format!("width={}", width).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: Some(width), 
+        height: None,
         scaling_filter: None,
         oversized_handling: None
       });
     }
   }
+
+  #[test]
+  fn invalid_width_returns_err() {
+    let cases = ["width=asdw", "width=300.1", "width=300px", "width=true", "width=", "width"];
+    for case in cases {
+      let test: Result<ImageParameters, ImageParameterParseError> = case.parse();
+      assert_eq!(test.unwrap_err(), ImageParameterParseError::WidthParseError);
+    }
+  }
+
+  #[test]
+  fn parses_height() {
+    let cases = [100_u32, 100, 200, 300, 400, 500, 600];
+    for height in cases {
+      let test: ImageParameters = format!("height={}", height).parse().unwrap();
+      assert_eq!(test, ImageParameters { 
+        width: None,
+        height: Some(height),
+        scaling_filter: None,
+        oversized_handling: None
+      });
+    }
+  }
+
+  #[test]
+  fn invalid_height_returns_err() {
+    let cases = ["height=asdw", "height=300.1", "height=300px", "height=true", "height=", "height"];
+    for case in cases {
+      let test: Result<ImageParameters, ImageParameterParseError> = case.parse();
+      assert_eq!(test.unwrap_err(), ImageParameterParseError::HeightParseError);
+    }
+  }
+  
 
   #[test]
   fn parses_filters() {
@@ -133,6 +179,7 @@ mod tests {
       let test: ImageParameters = format!("filter={}", filter_string).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: None, 
+        height: None,
         scaling_filter: Some(filter_type),
         oversized_handling: None
       });
@@ -148,6 +195,7 @@ mod tests {
       let test: ImageParameters = format!("oversizehandling={}", filter_string).parse().unwrap();
       assert_eq!(test, ImageParameters { 
         width: None, 
+        height: None,
         scaling_filter: None,
         oversized_handling: Some(filter_type)
       });
@@ -169,14 +217,5 @@ mod tests {
   fn non_existent_filter_returns_error() {
     let test: Result<ImageParameters, ImageParameterParseError> = "filter=notreal".parse();
     assert_eq!(test, Err(ImageParameterParseError::FilterParseError));
-  }
-
-  #[test]
-  fn invalid_width_returns_err() {
-    let cases = ["width=asdw", "width=300.1", "width=300px", "width=true", "width=", "width"];
-    for case in cases {
-      let test: Result<ImageParameters, ImageParameterParseError> = case.parse();
-      assert_eq!(test.unwrap_err(), ImageParameterParseError::WidthParseError);
-    }
   }
 }
