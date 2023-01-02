@@ -79,7 +79,7 @@ mod tests {
 
   use super::*;
 
-  const TEST_IMAGE_PATH: &str = "./images/test_card_sml.png";
+  const TEST_IMAGE_PATH: &str = "../images/test_card_sml.png";
 
   #[test]
   fn no_params_doesnt_manipulate_image() {
