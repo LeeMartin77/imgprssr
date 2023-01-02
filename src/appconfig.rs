@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use config::Config;
-
 use crate::parameters::{str_to_filter, OversizedImageHandling};
 
 #[derive(Debug)]
@@ -27,16 +23,6 @@ impl ImgprssrConfig {
   }
 }
 
-pub fn generate_app_config() -> Result<ImgprssrConfig, ImgprssrConfigErr> {
-  from_hashmap(Config::builder()
-        // ENV Variables are IMGPRSSR_SOMETHING == something
-        .add_source(config::Environment::with_prefix("IMGPRSSR"))
-        .build()
-        .unwrap()
-        .try_deserialize::<HashMap<String, String>>()
-        .unwrap())
-}
-
 // Really need to look at how to do this with a trait
 pub fn from_hashmap(hmp: std::collections::HashMap<String, String>) -> Result<ImgprssrConfig, ImgprssrConfigErr> {
   let mut config = ImgprssrConfig::default();
@@ -55,6 +41,8 @@ pub fn from_hashmap(hmp: std::collections::HashMap<String, String>) -> Result<Im
 
 #[cfg(test)]
 mod tests {
+  use std::collections::HashMap;
+
   use super::*;
 
   #[test]

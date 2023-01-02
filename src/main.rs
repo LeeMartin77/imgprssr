@@ -1,7 +1,9 @@
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
-use appconfig::ImgprssrConfig;
+use appconfig::{ImgprssrConfig, ImgprssrConfigErr};
+use config::Config;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 
@@ -24,6 +26,17 @@ async fn handle_image_request(settings: ImgprssrConfig, req: Request<Body>) -> R
     }
 }
 
+
+pub fn generate_app_config() -> Result<ImgprssrConfig, ImgprssrConfigErr> {
+    appconfig::from_hashmap(Config::builder()
+          // ENV Variables are IMGPRSSR_SOMETHING == something
+          .add_source(config::Environment::with_prefix("IMGPRSSR"))
+          .build()
+          .unwrap()
+          .try_deserialize::<HashMap<String, String>>()
+          .unwrap())
+  }
+
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
     let mut signals = Signals::new(&[
@@ -32,7 +45,7 @@ async fn main() -> Result<(), std::io::Error> {
         SIGQUIT,
     ])?;
 
-    let settings: ImgprssrConfig = appconfig::generate_app_config().unwrap();
+    let settings: ImgprssrConfig = generate_app_config().unwrap();
     
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 
