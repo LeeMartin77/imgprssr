@@ -11,14 +11,16 @@ pub enum ImgprssrConfigErr {
 #[derive(PartialEq)]
 pub struct ImgprssrConfig {
   pub default_filter: image::imageops::FilterType,
-  pub default_oversize_handling: OversizedImageHandling
+  pub default_oversize_handling: OversizedImageHandling,
+  pub image_source: String
 }
 
 impl ImgprssrConfig {
   pub fn default() -> ImgprssrConfig {
     ImgprssrConfig {
       default_filter: image::imageops::FilterType::Nearest,
-      default_oversize_handling: OversizedImageHandling::Clamp
+      default_oversize_handling: OversizedImageHandling::Clamp,
+      image_source: "./images".to_owned()
     }
   }
 }
