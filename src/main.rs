@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
-use appconfig::{ImgprssrConfig, ImgprssrConfigErr};
 use config::Config;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
@@ -11,24 +10,22 @@ use futures::stream::StreamExt;
 
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
-mod parameters;
-mod process;
-mod appconfig;
+use imgprssr_core;
 mod source;
 
-async fn handle_image_request(settings: ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn handle_image_request(settings: imgprssr_core::appconfig::ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let sourced = source::get_source_image(&settings, req);
     match sourced {
         Ok((img, img_format, params)) => Ok(Response::builder()
             .status(StatusCode::OK)
-            .body(process::process_image_to_buffer(&settings, img, img_format, params).into()).unwrap()),
+            .body(imgprssr_core::process::process_image_to_buffer(&settings, img, img_format, params).into()).unwrap()),
         Err(err_res) => Ok(err_res),
     }
 }
 
 
-pub fn generate_app_config() -> Result<ImgprssrConfig, ImgprssrConfigErr> {
-    appconfig::from_hashmap(Config::builder()
+pub fn generate_app_config() -> Result<imgprssr_core::appconfig::ImgprssrConfig, imgprssr_core::appconfig::ImgprssrConfigErr> {
+    imgprssr_core::appconfig::from_hashmap(Config::builder()
           // ENV Variables are IMGPRSSR_SOMETHING == something
           .add_source(config::Environment::with_prefix("IMGPRSSR"))
           .build()
@@ -45,7 +42,7 @@ async fn main() -> Result<(), std::io::Error> {
         SIGQUIT,
     ])?;
 
-    let settings: ImgprssrConfig = generate_app_config().unwrap();
+    let settings: imgprssr_core::appconfig::ImgprssrConfig = generate_app_config().unwrap();
     
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 
