@@ -1,24 +1,28 @@
-name: Publish Container
+name: Publish Tagged
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   test:
     uses: ./.github/workflows/test.yml
 
-  publish-binary:
+  publish-release-with-binary:
     needs:
       - test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: cargo build -r
-      - uses: actions/upload-artifact@v3
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: imgprssr-linux-${{ github.event.release.tag_name }}
-          path: target/release/imgprssr
+          prerelease: true
+          draft: true
+          files: |
+            target/release/imgprssr
 
   publish-container:
     needs:
