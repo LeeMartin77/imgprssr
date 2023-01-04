@@ -77,7 +77,11 @@ async fn main() -> Result<(), std::io::Error> {
     
     let addr = SocketAddr::from((bind.clone(), port.clone()));
 
-    println!("imgprssr sourcing images from {}", settings.image_source);
+    println!("imgprssr sourcing images from {}", match &settings.image_source {
+        appconfig::ImgSource::Folder(fldr) => fldr,
+        appconfig::ImgSource::Https((_, addr)) => addr,
+        appconfig::ImgSource::Http((_, addr)) => addr,
+    });
 
     let make_svc = make_service_fn(move |_conn| {
         let settings = settings.clone();
