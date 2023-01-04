@@ -30,8 +30,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - working-directory: ./imgprssr_core
-        run: cargo test --verbose
       - run: cargo test --verbose
 
   build:
@@ -39,8 +37,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - working-directory: ./imgprssr_core
-        run: cargo build --verbose
       - run: cargo build --verbose
 
   container-and-e2e:
