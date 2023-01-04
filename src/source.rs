@@ -1,8 +1,8 @@
 use std::{path::Path, str::FromStr};
-use imgprssr_core;
 use image::{self, DynamicImage, ImageError, ImageFormat};
 use hyper::{Request, Body, Response, StatusCode, Client, Uri};
 use hyper_tls::HttpsConnector;
+use imgprssr::{appconfig, parameters};
 
 pub async fn source_image_from_file_or_http(img_source: &str, target_path: &str) -> Result<(DynamicImage, ImageFormat), ImageError> {
     let full_path = format!("{}{}", img_source, target_path);
@@ -38,9 +38,9 @@ pub async fn source_image_from_file_or_http(img_source: &str, target_path: &str)
 
 }
 
-pub async fn get_source_image(settings: &imgprssr_core::appconfig::ImgprssrConfig, req: Request<Body>) -> Result<(image::DynamicImage, image::ImageFormat, imgprssr_core::parameters::ImageParameters), Response<Body>> {
+pub async fn get_source_image(settings: &appconfig::ImgprssrConfig, req: Request<Body>) -> Result<(image::DynamicImage, image::ImageFormat, parameters::ImageParameters), Response<Body>> {
   let target_path = req.uri().path();
-  let params_res: Result<imgprssr_core::parameters::ImageParameters, _> = req.uri().query().unwrap_or("").parse();
+  let params_res: Result<parameters::ImageParameters, _> = req.uri().query().unwrap_or("").parse();
   if params_res.is_err() {
       return Err(Response::builder()
           .status(StatusCode::BAD_REQUEST)

@@ -15,4 +15,3 @@ futures = "0.3.25"
 signal-hook = "0.3.14"
 signal-hook-tokio = { version = "0.3.1", features = ["futures-v0_3"] }
 image = { version = "0.24.5", features = ["webp-encoder"] }
-imgprssr_core = { path = "imgprssr_core", version = "0.1" }

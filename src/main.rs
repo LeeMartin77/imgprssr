@@ -3,6 +3,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 
 use config::Config;
+use imgprssr::{appconfig, process};
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 
@@ -10,21 +11,20 @@ use futures::stream::StreamExt;
 
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
-use imgprssr_core;
 mod source;
 
-async fn handle_image_request(settings: imgprssr_core::appconfig::ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn handle_image_request(settings: appconfig::ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let sourced = source::get_source_image(&settings, req).await;
     match sourced {
         Ok((img, img_format, params)) => Ok(Response::builder()
             .status(StatusCode::OK)
-            .body(imgprssr_core::process::process_image_to_buffer(&settings, img, img_format, params).into()).unwrap()),
+            .body(process::process_image_to_buffer(&settings, img, img_format, params).into()).unwrap()),
         Err(err_res) => Ok(err_res),
     }
 }
 
 
-pub fn generate_app_config() -> Result<(([u8; 4], u16), imgprssr_core::appconfig::ImgprssrConfig), imgprssr_core::appconfig::ImgprssrConfigErr> {
+pub fn generate_app_config() -> Result<(([u8; 4], u16), appconfig::ImgprssrConfig), appconfig::ImgprssrConfigErr> {
     let raw_hashmap = Config::builder()
         // ENV Variables are IMGPRSSR_SOMETHING == something
         .add_source(config::Environment::with_prefix("IMGPRSSR"))
@@ -40,7 +40,7 @@ pub fn generate_app_config() -> Result<(([u8; 4], u16), imgprssr_core::appconfig
         let split = config_address.split(".");
         let mut parsed = split.map(|a| a.parse::<u8>()).into_iter();
         if parsed.clone().count() != 4 && !parsed.clone().all(|res| res.is_ok()){
-            return Err(imgprssr_core::appconfig::ImgprssrConfigErr::InvalidValues(vec!["address".to_owned()]))
+            return Err(appconfig::ImgprssrConfigErr::InvalidValues(vec!["address".to_owned()]))
         }
         let mut i = 0;
         while let Some(part) = parsed.next() {
@@ -53,11 +53,11 @@ pub fn generate_app_config() -> Result<(([u8; 4], u16), imgprssr_core::appconfig
         if let Ok(prsd_port) = config_port.parse::<u16>() {
             port = prsd_port;
         } else {
-            return Err(imgprssr_core::appconfig::ImgprssrConfigErr::InvalidValues(vec!["port".to_owned()]))
+            return Err(appconfig::ImgprssrConfigErr::InvalidValues(vec!["port".to_owned()]))
         }
     }
     
-    let app_config_res = imgprssr_core::appconfig::from_hashmap(raw_hashmap);
+    let app_config_res = appconfig::from_hashmap(raw_hashmap);
 
     match app_config_res {
         Ok(app_config) => Ok(((address, port), app_config)),

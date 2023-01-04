@@ -578,17 +578,9 @@ dependencies = [
  "hyper",
  "hyper-tls",
  "image",
- "imgprssr_core",
  "signal-hook",
  "signal-hook-tokio",
  "tokio",
-]
-
-[[package]]
-name = "imgprssr_core"
-version = "0.1.0"
-dependencies = [
- "image",
 ]
 
 [[package]]
