@@ -14,7 +14,7 @@ use imgprssr_core;
 mod source;
 
 async fn handle_image_request(settings: imgprssr_core::appconfig::ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let sourced = source::get_source_image(&settings, req);
+    let sourced = source::get_source_image(&settings, req).await;
     match sourced {
         Ok((img, img_format, params)) => Ok(Response::builder()
             .status(StatusCode::OK)

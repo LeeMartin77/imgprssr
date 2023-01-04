@@ -35,6 +35,10 @@ pub fn from_hashmap(hmp: std::collections::HashMap<String, String>) -> Result<Im
         Err(_) => errors.push(format!("default_filter::{val}")),
     }
   }
+  if let Some(img_src) = hmp.get("image_source") {
+    // TODO: Test and have an enum for type
+    config.image_source = img_src.to_owned();
+  }
   if errors.len() > 0 {
     return Err(ImgprssrConfigErr::InvalidValues(errors));
   }
