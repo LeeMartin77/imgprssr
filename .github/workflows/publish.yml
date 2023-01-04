@@ -41,12 +41,12 @@ jobs:
         run: |
           sudo apt install qemu-user-static
           platarch=linux/arm64/v8,linux/amd64
-          podman build --jobs=6 --platform=$platarch --manifest ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} .
+          podman build --jobs=6 --platform=$platarch --manifest imgprssr:${{ github.event.release.tag_name }} .
 
       - name: Push Version
-        run: podman manifest push ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }}
+        run: podman manifest push imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }}
 
       - name: Push Latest
         run: |
-          podman tag ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:latest
-          podman manifest push ghcr.io/leemartin77/imgprssr:latest ghcr.io/leemartin77/imgprssr:latest
+          podman tag imgprssr:${{ github.event.release.tag_name }} imgprssr:latest
+          podman manifest push imgprssr:latest ghcr.io/leemartin77/imgprssr:latest
