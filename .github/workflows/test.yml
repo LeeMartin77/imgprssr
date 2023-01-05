@@ -55,7 +55,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: imgprssrtest
-          push: false
+          push: true
           platforms: linux/arm64/v8,linux/amd64
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
