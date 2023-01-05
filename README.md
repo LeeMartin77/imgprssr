@@ -29,12 +29,16 @@ The following environment variables are available:
 
 ### Running
 
-```bash
-podman run -d -v ./images:/images -p 3000:3000 ghcr.io/leemartin77/imgprssr
-```
+Volume-mounted Image Source:
 
 ```bash
-docker run -d -v ./images:/images -p 3000:3000 ghcr.io/leemartin77/imgprssr
+podman run -d -v ./images:/images -p 3000:3000 ghcr.io/leemartin77/imgprssr:latest
+```
+
+HTTPS Image Source:
+
+```bash
+podman run -d -e IMGPRSSR_IMAGE_SOURCE=https://raw.githubusercontent.com/LeeMartin77/imgprssr/main/images -p 3000:3000 ghcr.io/leemartin77/imgprssr:latest
 ```
 
 There is also a binary of the application included with the release, however I give no guaruntees on this working, and _strongly_ recommend using the container.
