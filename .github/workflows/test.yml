@@ -57,6 +57,7 @@ jobs:
           tags: imgprssrtest
           push: true
           platforms: linux/arm64/v8,linux/amd64
+          file: Containerfile
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
         working-directory: ./e2e_tests
