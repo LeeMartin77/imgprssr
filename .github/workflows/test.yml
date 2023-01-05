@@ -47,7 +47,10 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: "./e2e_tests/.nvmrc"
-      - run: podman build -t imgprssrtest .
+      - run: |
+          sudo apt install qemu-user-static
+          platarch=linux/amd64
+          buildah build --platform=$platarch --manifest imgprssrtest .
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
         working-directory: ./e2e_tests

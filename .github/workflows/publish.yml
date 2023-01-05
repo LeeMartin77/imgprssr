@@ -36,12 +36,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Publish the Container image
-        working-directory: .
+      - name: Build the Container image
         run: |
           sudo apt install qemu-user-static
           platarch=linux/arm64/v8,linux/amd64
-          podman build --jobs=6 --platform=$platarch --manifest imgprssr:${{ github.event.release.tag_name }} .
+          buildah build --platform=$platarch --manifest imgprssr:${{ github.event.release.tag_name }} .
 
       - name: Push Version
         run: podman manifest push imgprssr:${{ github.event.release.tag_name }} ghcr.io/leemartin77/imgprssr:${{ github.event.release.tag_name }}
