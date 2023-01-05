@@ -49,9 +49,14 @@ jobs:
           node-version-file: "./e2e_tests/.nvmrc"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - run: |
-          platarch=linux/arm64/v8,linux/amd64
-          docker buildx build --platform=$platarch --load -t imgprssrtest .
+      - name: Build
+        uses: docker/build-push-action@v3
+        with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: imgprssrtest
+          push: false
+          platforms: linux/arm64/v8,linux/amd64
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
         working-directory: ./e2e_tests
