@@ -49,7 +49,7 @@ jobs:
           node-version-file: "./e2e_tests/.nvmrc"
       - run: |
           sudo apt install qemu-user-static
-          platarch=linux/arm64/v8,linux/amd64
+          platarch=linux/amd64
           buildah build --platform=$platarch --manifest imgprssrtest .
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
