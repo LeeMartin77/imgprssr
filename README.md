@@ -8,6 +8,14 @@ This is a very trim application - you give it a source (either a root directory,
 
 It's written in rust, and relies heavily on the [hyper](https://crates.io/crates/hyper) and [image](https://crates.io/crates/image) crates, and in a lot of ways can be considered a simple wrapper around them.
 
+### Supported image formats
+
+We use the supported image formats of the image crate, with the exception of avif.
+
+[images support table](https://crates.io/crates/image#user-content-supported-image-formats)
+
+TL;DR: `PNG, JPEG, GIF, BMP, ICO, TIFF, WebP, PNM, DDS, TGA, OpenEXR, farbfeld`
+
 ## Why?
 
 I wanted a container I could deploy to my cluster, which could serve and dynamically resize a directory of images, and was a bit shocked I couldn't immediately find something. Not for anything important, just a website for ranking mince pies. I thought I can't be the only one with this requirement - so I'm putting this up for others to use.
