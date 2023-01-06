@@ -1,4 +1,5 @@
 const sizeOf = require("image-size");
+const { ROOT_URL } = require("./config");
 
 describe("Cropping Tests", () => {
   const sizes = [
@@ -11,7 +12,7 @@ describe("Cropping Tests", () => {
     "Gets image at width %s and height %s",
     async (width, height) => {
       let res = await fetch(
-        `http://127.0.0.1:3000/test_card_sml.png?width=${width}&height=${height}`
+        `${ROOT_URL}/test_card_sml.png?width=${width}&height=${height}`
       );
       let imgBuffer = Buffer.from(await res.arrayBuffer());
       let size = sizeOf(imgBuffer);

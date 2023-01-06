@@ -52,7 +52,12 @@ jobs:
           platarch=linux/amd64
           buildah build --platform=$platarch --manifest imgprssrtest .
       - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
+      - run: podman run -d -e IMGPRSSR_IMAGE_SOURCE=https://raw.githubusercontent.com/LeeMartin77/imgprssr/main/images -p 3001:3000 imgprssrtest
       - run: npm ci
         working-directory: ./e2e_tests
-      - run: npm test
+      - name: Test Volume Mount
+        run: IMGPRSSR_URL=http://127.0.0.1:3000 npm test
+        working-directory: ./e2e_tests
+      - name: Test HTTPS Route
+        run: IMGPRSSR_URL=http://127.0.0.1:3001 npm test
         working-directory: ./e2e_tests
