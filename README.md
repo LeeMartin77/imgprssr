@@ -1,5 +1,7 @@
 # imgprssr - a lean, mean, image resizing service.
 
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/leemartin77/imgprssr/test.yml?label=Test%20and%20Build) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/leemartin77/imgprssr)
+
 ## What?
 
 This is a very trim application - you give it a source (either a root directory, or a root web address), and it will allow images from this source to be resized on the fly.
