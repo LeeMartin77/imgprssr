@@ -48,6 +48,7 @@ jobs:
         with:
           node-version-file: "./e2e_tests/.nvmrc"
       - run: |
+          sudo apt update
           sudo apt install qemu-user-static
           platarch=linux/amd64
           buildah build --platform=$platarch --manifest imgprssrtest .
