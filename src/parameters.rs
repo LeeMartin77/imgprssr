@@ -6,7 +6,8 @@ pub enum ImageParameterParseError {
   WidthParseError,
   HeightParseError,
   FilterParseError,
-  OversizeParseError
+  OversizeParseError,
+  ColourParseError
 }
 
 #[derive(Debug)]
@@ -30,11 +31,31 @@ impl FromStr for OversizedImageHandling {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
+#[derive(Copy)]
+pub enum ColourMode {
+  Greyscale
+}
+
+impl FromStr for ColourMode {
+    type Err = std::fmt::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "greyscale" => Ok(ColourMode::Greyscale),
+            _ => Err(std::fmt::Error)
+        }
+    }
+}
+
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub struct ImageParameters {
   pub width: Option<u32>,
   pub height: Option<u32>,
   pub scaling_filter: Option<image::imageops::FilterType>,
-  pub oversized_handling: Option<OversizedImageHandling>
+  pub oversized_handling: Option<OversizedImageHandling>,
+  pub colour_options: Option<ColourMode>
 }
 
 pub fn str_to_filter(filter_string: &str) -> Result<image::imageops::FilterType, ImageParameterParseError> {
@@ -59,7 +80,8 @@ impl FromStr for ImageParameters {
         width: None, 
         height: None,
         scaling_filter: None,
-        oversized_handling: None
+        oversized_handling: None,
+        colour_options: None
       };
 
       for q in query_parts {
@@ -100,6 +122,14 @@ impl FromStr for ImageParameters {
         }
       }
 
+      if let Some(stng) = params.get("colour") {
+        if let Ok(val) = stng.parse::<ColourMode>() {
+          img_params.colour_options = Some(val);
+        } else {
+          return Err(ImageParameterParseError::ColourParseError);
+        }
+      }
+
       Ok(img_params)
     }
 }
@@ -115,7 +145,8 @@ mod tests {
       width: None, 
       height: None,
       scaling_filter: None,
-      oversized_handling: None
+      oversized_handling: None,
+      colour_options: None
     });
   }
 
@@ -128,7 +159,8 @@ mod tests {
         width: Some(width), 
         height: None,
         scaling_filter: None,
-        oversized_handling: None
+        oversized_handling: None,
+        colour_options: None
       });
     }
   }
@@ -151,7 +183,8 @@ mod tests {
         width: None,
         height: Some(height),
         scaling_filter: None,
-        oversized_handling: None
+        oversized_handling: None,
+        colour_options: None
       });
     }
   }
@@ -181,7 +214,8 @@ mod tests {
         width: None, 
         height: None,
         scaling_filter: Some(filter_type),
-        oversized_handling: None
+        oversized_handling: None,
+        colour_options: None
       });
     }
   }
@@ -197,7 +231,8 @@ mod tests {
         width: None, 
         height: None,
         scaling_filter: None,
-        oversized_handling: Some(filter_type)
+        oversized_handling: Some(filter_type),
+        colour_options: None
       });
     }
   }
@@ -210,6 +245,35 @@ mod tests {
     for filter_string in cases {
       let test: Result<ImageParameters, ImageParameterParseError> = format!("oversizehandling={}", filter_string).parse();
       assert_eq!(test, Err(ImageParameterParseError::OversizeParseError));
+    }
+  }
+
+
+    #[test]
+  fn parses_colour_handling() {
+    let cases = [
+      (ColourMode::Greyscale, "greyscale"),
+    ];
+    for (colour_mode, filter_string) in cases {
+      let test: ImageParameters = format!("colour={}", filter_string).parse().unwrap();
+      assert_eq!(test, ImageParameters { 
+        width: None, 
+        height: None,
+        scaling_filter: None,
+        oversized_handling: None,
+        colour_options: Some(colour_mode)
+      });
+    }
+  }
+
+  #[test]
+  fn errors_colour_handling() {
+    let cases = [
+      "akmdsas",
+    ];
+    for filter_string in cases {
+      let test: Result<ImageParameters, ImageParameterParseError> = format!("colour={}", filter_string).parse();
+      assert_eq!(test, Err(ImageParameterParseError::ColourParseError));
     }
   }
 

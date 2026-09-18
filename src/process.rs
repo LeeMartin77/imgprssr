@@ -67,15 +67,21 @@ pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: c
   if params.height.is_some() && params.width.is_some() {
     img = fit_to_set_size(img, params.width.unwrap(), params.height.unwrap(), scaling_filter, oversize_handling);
   }
-  img
+  
+  match params.colour_options {
+      Some(opt) => match opt {
+        crate::parameters::ColourMode::Greyscale => img = img.grayscale(),
+      },
+      None => {}, // do nothing
+  }
+  return img
 }
-
 
 #[cfg(test)]
 mod tests {
   use std::path::Path;
 
-  use crate::parameters::{ImageParameters};
+  use crate::parameters::{ColourMode::Greyscale, ImageParameters};
 
   use super::*;
 
@@ -84,7 +90,7 @@ mod tests {
   #[test]
   fn no_params_doesnt_manipulate_image() {
     let img = image::open(Path::new(TEST_IMAGE_PATH)).unwrap();
-    let params = ImageParameters { width: None, height: None, scaling_filter: None, oversized_handling: None };
+    let params = ImageParameters { width: None, height: None, scaling_filter: None, oversized_handling: None, colour_options: None };
     let cloned_image = img.clone();
     assert_eq!(process_image(&ImgprssrConfig::default(), img, params), cloned_image);
   }
@@ -96,7 +102,7 @@ mod tests {
     let cases = [[123_u32, 61], [200_u32, 100], [300_u32, 150], [600_u32, 300]];
     for case in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: Some(case[0]), height: None, scaling_filter: None, oversized_handling: None };
+      let params = ImageParameters { width: Some(case[0]), height: None, scaling_filter: None, oversized_handling: None, colour_options: None };
       let processed = process_image(&ImgprssrConfig::default(), img, params);
       assert_eq!(processed.width(), case[0]);
       assert_eq!(processed.height(), case[1]);
@@ -109,7 +115,7 @@ mod tests {
     let cases = [[236, 123], [400, 400], [250, 300]];
     for [width, height] in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: Some(width), height: Some(height), scaling_filter: None, oversized_handling: None };
+      let params = ImageParameters { width: Some(width), height: Some(height), scaling_filter: None, oversized_handling: None, colour_options: None };
       let processed = process_image(&ImgprssrConfig::default(), img, params);
       assert_eq!(processed.width(), width);
       assert_eq!(processed.height(), height);
@@ -123,10 +129,19 @@ mod tests {
     let cases = [[123_u32, 246], [200_u32, 400], [150_u32, 300], [300_u32, 600]];
     for case in cases {
       let img = image::DynamicImage::new_rgb8(source_size[0], source_size[1]);
-      let params = ImageParameters { width: None, height: Some(case[0]), scaling_filter: None, oversized_handling: None };
+      let params = ImageParameters { width: None, height: Some(case[0]), scaling_filter: None, oversized_handling: None, colour_options: None };
       let processed = process_image(&ImgprssrConfig::default(), img, params);
       assert_eq!(processed.height(), case[0]);
       assert_eq!(processed.width(), case[1]);
     }
   }
+
+  #[test]
+  fn greyscale_desaturates() {
+    let img = image::open(Path::new(TEST_IMAGE_PATH)).unwrap();
+    let params = ImageParameters { width: None, height: None, scaling_filter: None, oversized_handling: None, colour_options: Some(Greyscale) };
+    let cloned_image = img.clone();
+    assert_eq!(process_image(&ImgprssrConfig::default(), img, params), cloned_image.grayscale());
+  }
+
 }
