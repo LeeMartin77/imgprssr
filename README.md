@@ -61,6 +61,7 @@ Once the service is running, you can make a request with the following query par
 - `height`: the height of the image you want in pixels
 - `filter`: the filtering you want to use for resizing
   - one of `nearest`, `gaussian`, `catmullrom`, `lanczos3`, `triangle`
+- `colour`: set to `greyscale` to desaturate images
 
 Note: It's worth playing around with the `filter` parameter based on the content of the image.
 

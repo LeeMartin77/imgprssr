@@ -9,8 +9,8 @@ on:
     branches: ["main"]
     paths:
       - "src/**"
-      - "Containerfile"
-      - ".containerignore"
+      - "Dockerfile"
+      - ".dockerignore"
       - "Cargo.lock"
       - "Cargo.toml"
       - .github/workflows/test.yml
@@ -18,8 +18,8 @@ on:
     branches: ["main"]
     paths:
       - "src/**"
-      - "Containerfile"
-      - ".containerignore"
+      - "Dockerfile"
+      - ".dockerignore"
       - "Cargo.lock"
       - "Cargo.toml"
       - .github/workflows/test.yml
@@ -29,21 +29,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       - run: cargo test --verbose
 
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
       - run: cargo build --verbose
 
   container-and-e2e:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v3
         with:
           node-version-file: "./e2e_tests/.nvmrc"
