@@ -25,7 +25,8 @@ jobs:
 
 
   publish-container:
-    needs: test-code
+    needs: 
+      - test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -52,5 +53,5 @@ jobs:
           context: .
           platforms: linux/arm64/v8,linux/amd64
           push: true
-          cache-from: type=registry,ref=ghcr.io/tin-ram-uk/quickcategory:buildcache
-          cache-to: type=registry,ref=ghcr.io/tin-ram-uk/quickcategory:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/leemartin77/imgprssr:buildcache
+          cache-to: type=registry,ref=ghcr.io/leemartin77/imgprssr:buildcache,mode=max
