@@ -282,4 +282,109 @@ mod tests {
     let test: Result<ImageParameters, ImageParameterParseError> = "filter=notreal".parse();
     assert_eq!(test, Err(ImageParameterParseError::FilterParseError));
   }
+
+  // ---------------------------------------------------------------------------
+  // Property-based tests (proptest)
+  // ---------------------------------------------------------------------------
+
+  mod proptest_tests {
+    use proptest::prelude::*;
+
+    use super::*;
+
+    // Valid filter strings are always parsed successfully.
+    proptest! {
+      #[test]
+      fn valid_filter_strings_parse(filter in "nearest|gaussian|catmullrom|lanczos3|triangle") {
+        let result: Result<ImageParameters, _> = format!("filter={filter}").parse();
+        assert!(result.is_ok());
+      }
+
+      // Invalid filter strings always fail with FilterParseError.
+      #[test]
+      fn invalid_filter_strings_fail(filter in "[^a-z]*") {
+        let result: Result<ImageParameters, _> = format!("filter={filter}").parse();
+        assert_eq!(result, Err(ImageParameterParseError::FilterParseError));
+      }
+
+      // Valid u32 widths parse successfully.
+      #[test]
+      fn valid_width_parses(width in 1u32..=u32::MAX) {
+        let result: ImageParameters = format!("width={width}").parse().unwrap();
+        assert_eq!(result.width, Some(width));
+      }
+
+      // Non-numeric width values always fail.
+      #[test]
+      fn non_numeric_width_fails(width in "[^0-9]+") {
+        let result: Result<ImageParameters, _> = format!("width={width}").parse();
+        assert_eq!(result, Err(ImageParameterParseError::WidthParseError));
+      }
+
+      // Non-numeric height values always fail.
+      #[test]
+      fn non_numeric_height_fails(height in "[^0-9]+") {
+        let result: Result<ImageParameters, _> = format!("height={height}").parse();
+        assert_eq!(result, Err(ImageParameterParseError::HeightParseError));
+      }
+
+      // Valid height values parse successfully.
+      #[test]
+      fn valid_height_parses(height in 1u32..=u32::MAX) {
+        let result: ImageParameters = format!("height={height}").parse().unwrap();
+        assert_eq!(result.height, Some(height));
+      }
+
+      // Empty query string yields all-None params.
+      #[test]
+      fn empty_string_parses_to_none(empty in "[a-z]{0}") {
+        let result: ImageParameters = empty.parse().unwrap();
+        assert!(result.width.is_none());
+        assert!(result.height.is_none());
+        assert!(result.scaling_filter.is_none());
+        assert!(result.oversized_handling.is_none());
+        assert!(result.colour_options.is_none());
+      }
+
+      // Combined width + height parses both.
+      #[test]
+      fn combined_width_and_height(width in 1u32..10000u32, height in 1u32..10000u32) {
+        let result: ImageParameters = format!("width={width}&height={height}").parse().unwrap();
+        assert_eq!(result.width, Some(width));
+        assert_eq!(result.height, Some(height));
+      }
+
+      // Oversized handling accepts only "clamp".
+      #[test]
+      fn valid_oversize_parses(val in "clamp") {
+        let result: ImageParameters = format!("oversizehandling={val}").parse().unwrap();
+        assert_eq!(result.oversized_handling, Some(OversizedImageHandling::Clamp));
+      }
+
+      // Colour accepts only "greyscale".
+      #[test]
+      fn valid_colour_parses(val in "greyscale") {
+        let result: ImageParameters = format!("colour={val}").parse().unwrap();
+        assert_eq!(result.colour_options, Some(ColourMode::Greyscale));
+      }
+
+      // Boolean-like values for width/height fail.
+      #[test]
+      fn boolean_values_for_size_fail(val in "true|false|yes|no|on|off") {
+        let w: Result<ImageParameters, _> = format!("width={val}").parse();
+        let h: Result<ImageParameters, _> = format!("height={val}").parse();
+        assert_eq!(w, Err(ImageParameterParseError::WidthParseError));
+        assert_eq!(h, Err(ImageParameterParseError::HeightParseError));
+      }
+
+      // Negative numbers (parsed as large u32 overflow) fail.
+      #[test]
+      fn negative_numbers_fail(val in "-[0-9]+") {
+        let w: Result<ImageParameters, _> = format!("width={val}").parse();
+        let h: Result<ImageParameters, _> = format!("height={val}").parse();
+        assert!(w.is_err() || w.as_ref().map(|p| p.width.is_none()).unwrap_or(false));
+        assert!(h.is_err() || h.as_ref().map(|p| p.height.is_none()).unwrap_or(false));
+      }
+    }
+  }
 }

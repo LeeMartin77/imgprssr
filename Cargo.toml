@@ -19,3 +19,4 @@ urlencoding = "2"
 
 [dev-dependencies]
 temp-env = "0.3"
+proptest = "1"
