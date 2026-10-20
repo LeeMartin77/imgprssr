@@ -9,6 +9,8 @@ on:
     branches: ["main"]
     paths:
       - "src/**"
+      - "tests/**"
+      - "e2e_tests/**"
       - "Dockerfile"
       - ".dockerignore"
       - "Cargo.lock"
@@ -18,6 +20,8 @@ on:
     branches: ["main"]
     paths:
       - "src/**"
+      - "tests/**"
+      - "e2e_tests/**"
       - "Dockerfile"
       - ".dockerignore"
       - "Cargo.lock"
