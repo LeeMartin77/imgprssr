@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
-use imgprssr::{appconfig, process, server_config};
+use imgprssr::{appconfig, process, server_config, source};
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 
@@ -9,7 +9,6 @@ use futures::stream::StreamExt;
 
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
-mod source;
 
 async fn handle_image_request(settings: appconfig::ImgprssrConfig, req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let sourced = source::get_source_image(&settings, req).await;

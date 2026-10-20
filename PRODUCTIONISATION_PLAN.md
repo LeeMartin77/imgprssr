@@ -98,10 +98,10 @@ The service has no request rate limiting, no Content-Security-Policy headers, an
 - [x] **2. Add tests for test infrastructure** (verify CI discovers and runs tests, e2e suite bootstraps correctly)
 - [x] **3. Add unit tests for `appconfig.rs`** and `main.rs` handler (TDD)
 - [x] **4. Add unit tests for `process.rs`** (oversized handling, filters, combined params) (TDD)
-- [ ] **5. Write path traversal test** (TDD — red)
-- [ ] **6. Fix path traversal vulnerability** (TDD — green)
-- [ ] **7. Write SSRF test** (TDD — red)
-- [ ] **8. Fix SSRF vulnerability** on HTTP/HTTPS source (TDD — green)
+- [x] **5. Write path traversal test** (TDD — red)
+- [x] **6. Fix path traversal vulnerability** (TDD — green)
+- [x] **7. Write SSRF test** (TDD — red)
+- [x] **8. Fix SSRF vulnerability** on HTTP/HTTPS source (TDD — green)
 - [ ] **9. Add `cargo audit` to CI** (security baseline)
 - [ ] **10. Add `cargo fuzz` / property-based tests** for parameter parsing
 - [ ] **11. Add e2e tests** for error cases, greyscale, formats, edge cases — serves as regression guard before upgrades

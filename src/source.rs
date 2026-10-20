@@ -1,8 +1,21 @@
-use std::{path::Path, str::FromStr};
+use std::{borrow::Cow, path::Path, str::FromStr};
 use image::{self, DynamicImage, ImageError, ImageFormat};
 use hyper::{Request, Body, Response, StatusCode, Client, Uri, client::{HttpConnector}};
 use hyper_tls::HttpsConnector;
-use imgprssr::{appconfig, parameters};
+use crate::{appconfig, parameters};
+
+/// Sanitises a user-supplied path segment: decodes any percent-encoding,
+/// then rejects `..` components that could escape the intended directory.
+pub fn sanitize_user_path(input: &str) -> Result<String, ImageError> {
+    let decoded = urlencoding::decode(input).unwrap_or_else(|_| Cow::Borrowed(input));
+    if decoded.contains("..") {
+        return Err(ImageError::IoError(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Path traversal not allowed",
+        )));
+    }
+    Ok(decoded.into_owned())
+}
 
 async fn handle_response(response: Result<Response<Body>, hyper::Error>) -> Result<(DynamicImage, ImageFormat), ImageError> {
     match response {
@@ -24,16 +37,19 @@ async fn handle_response(response: Result<Response<Body>, hyper::Error>) -> Resu
 }
 
 pub async fn source_image_from_http((client, img_source): &(Client<HttpConnector>, String), target_path: &str) -> Result<(DynamicImage, ImageFormat), ImageError> {
+    sanitize_user_path(target_path)?;
     let full_path = format!("{}{}", img_source, target_path);
     handle_response(client.get(Uri::from_str(&full_path).unwrap()).await).await
 }
 
 pub async fn source_image_from_https((client, img_source): &(Client<HttpsConnector<HttpConnector>>, String), target_path: &str) -> Result<(DynamicImage, ImageFormat), ImageError> {
+    sanitize_user_path(target_path)?;
     let full_path = format!("{}{}", img_source, target_path);
     handle_response(client.get(Uri::from_str(&full_path).unwrap()).await).await
 }
 
 pub fn source_image_from_file(img_source: &str, target_path: &str) -> Result<(DynamicImage, ImageFormat), ImageError> {
+    sanitize_user_path(target_path)?;
     let full_path = format!("{}{}", img_source, target_path);
     let path = Path::new(&full_path);
     match image::open(path) {
@@ -87,6 +103,55 @@ mod tests {
     fn errors_with_local_file_paths() {
         assert!(source_image_from_file("./images", "/this_image_doesnt_exist.png").is_err());
     }
+
+    #[test]
+    fn path_traversal_rejected() {
+        // Attempt to traverse outside the image directory.
+        // Without sanitisation this would read /etc/passwd (or panic if unreadable).
+        // With the fix, any path containing ".." that escapes the source dir must error.
+        let result = source_image_from_file("./images", "/../../etc/passwd");
+        assert!(result.is_err(), "Path traversal should be rejected, not allowed");
+    }
+
+    #[test]
+    fn path_traversal_double_dot_rejected() {
+        // Alternative traversal attempt
+        let result = source_image_from_file("./images", "/foo/../../../etc/hosts");
+        assert!(result.is_err(), "Path traversal with multiple '..' should be rejected");
+    }
+
+    #[test]
+    fn path_traversal_can_read_outside_directory() {
+        // Creates a temp directory with a valid PNG outside the source dir.
+        // Without sanitisation this reads the file → test fails (RED).
+        // With sanitisation this returns Err → test passes (GREEN).
+        let temp_base = std::env::temp_dir().join("imgprssr_path_traversal_test");
+        let _ = std::fs::create_dir_all(&temp_base);
+        let imgs_dir = temp_base.join("imgs");
+        let _ = std::fs::create_dir_all(&imgs_dir);
+
+        // Write a valid PNG outside the source directory
+        let secret_img = image::DynamicImage::new_rgb8(10, 10);
+        let mut secret_buf = Vec::new();
+        secret_img
+            .write_to(&mut std::io::Cursor::new(&mut secret_buf), image::ImageFormat::Png)
+            .unwrap();
+        std::fs::write(temp_base.join("secret.png"), &secret_buf).unwrap();
+
+        // Try to traverse out of imgs/ and read secret.png
+        let result = source_image_from_file(
+            imgs_dir.to_str().unwrap(),
+            "/../secret.png",
+        );
+
+        // Clean up
+        let _ = std::fs::remove_dir_all(&temp_base);
+
+        assert!(
+            result.is_err(),
+            "Path traversal should be blocked but it successfully read secret.png"
+        );
+    }
     #[tokio::test]
     async fn works_with_http_file_addresses() {
         let https = HttpsConnector::new();
@@ -99,5 +164,21 @@ mod tests {
         let https = HttpsConnector::new();
         let client = Client::builder().build::<_, hyper::Body>(https);
         assert!(source_image_from_https(&(client, "https://raw.githubusercontent.com/LeeMartin77/imgprssr/main/images".to_owned()), "/this_image_doesnt_exist.png").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn http_path_traversal_rejected() {
+        let https = HttpsConnector::new();
+        let client = Client::builder().build::<_, hyper::Body>(https);
+        // Should be rejected before any network call
+        assert!(source_image_from_https(&(client, "https://example.com".to_owned()), "/../../../etc/passwd").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn http_url_encoded_traversal_rejected() {
+        let https = HttpsConnector::new();
+        let client = Client::builder().build::<_, hyper::Body>(https);
+        // %2e%2e decodes to .. — should also be rejected
+        assert!(source_image_from_https(&(client, "https://example.com".to_owned()), "/%2e%2e/%2e%2e/etc/passwd").await.is_err());
     }
 }
