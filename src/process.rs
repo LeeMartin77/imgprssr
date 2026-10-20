@@ -81,6 +81,8 @@ pub fn process_image(settings: &ImgprssrConfig, mut img: DynamicImage, params: c
 mod tests {
   use std::path::Path;
 
+  use image::GenericImageView;
+
   use crate::parameters::{ColourMode::Greyscale, ImageParameters};
 
   use super::*;
@@ -142,6 +144,141 @@ mod tests {
     let params = ImageParameters { width: None, height: None, scaling_filter: None, oversized_handling: None, colour_options: Some(Greyscale) };
     let cloned_image = img.clone();
     assert_eq!(process_image(&ImgprssrConfig::default(), img, params), cloned_image.grayscale());
+  }
+
+  #[test]
+  fn clamp_does_not_upscale_width() {
+    // Source is 100x50, target width is 200. Clamp should keep original.
+    let img = image::DynamicImage::new_rgb8(100, 50);
+    let params = ImageParameters {
+      width: Some(200),
+      height: None,
+      scaling_filter: None,
+      oversized_handling: Some(OversizedImageHandling::Clamp),
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 100);
+    assert_eq!(processed.height(), 50);
+  }
+
+  #[test]
+  fn clamp_does_not_upscale_height() {
+    // Source is 100x50, target height is 100. Clamp should keep original.
+    let img = image::DynamicImage::new_rgb8(100, 50);
+    let params = ImageParameters {
+      width: None,
+      height: Some(100),
+      scaling_filter: None,
+      oversized_handling: Some(OversizedImageHandling::Clamp),
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 100);
+    assert_eq!(processed.height(), 50);
+  }
+
+  #[test]
+  fn clamp_downsizes_when_source_is_larger() {
+    // Source is 1000x500, target is 200x100. Clamp should downsize.
+    let img = image::DynamicImage::new_rgb8(1000, 500);
+    let params = ImageParameters {
+      width: Some(200),
+      height: Some(100),
+      scaling_filter: None,
+      oversized_handling: Some(OversizedImageHandling::Clamp),
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 200);
+    assert_eq!(processed.height(), 100);
+  }
+
+  #[test]
+  fn clamp_does_not_upscale_with_both_dimensions() {
+    // Source is 100x50, target is 200x100. Clamp should keep original.
+    // This exercises fit_to_set_size path with Clamp mode.
+    let img = image::DynamicImage::new_rgb8(100, 50);
+    let params = ImageParameters {
+      width: Some(200),
+      height: Some(100),
+      scaling_filter: None,
+      oversized_handling: Some(OversizedImageHandling::Clamp),
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 100);
+    assert_eq!(processed.height(), 50);
+  }
+
+  #[test]
+  fn non_clamp_upsizes_with_both_dimensions() {
+    // Source is 100x50, target is 200x100. Default oversize is Clamp,
+    // but we explicitly set None (inherits Clamp from config default).
+    // This should NOT upscale.
+    let img = image::DynamicImage::new_rgb8(100, 50);
+    let params = ImageParameters {
+      width: Some(200),
+      height: Some(100),
+      scaling_filter: None,
+      oversized_handling: None, // inherits Clamp from config
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    // Clamp mode: should NOT upscale
+    assert_eq!(processed.width(), 100);
+    assert_eq!(processed.height(), 50);
+  }
+
+  #[test]
+  fn gaussian_filter_resizes() {
+    let img = image::DynamicImage::new_rgb8(1000, 500);
+    let params = ImageParameters {
+      width: Some(200),
+      height: None,
+      scaling_filter: Some(image::imageops::FilterType::Gaussian),
+      oversized_handling: None,
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 200);
+    assert_eq!(processed.height(), 100);
+  }
+
+  #[test]
+  fn catmullrom_filter_resizes() {
+    let img = image::DynamicImage::new_rgb8(1000, 500);
+    let params = ImageParameters {
+      width: Some(200),
+      height: None,
+      scaling_filter: Some(image::imageops::FilterType::CatmullRom),
+      oversized_handling: None,
+      colour_options: None,
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 200);
+    assert_eq!(processed.height(), 100);
+  }
+
+  #[test]
+  fn combined_params_width_filter_greyscale() {
+    let img = image::DynamicImage::new_rgb8(200, 100);
+    let params = ImageParameters {
+      width: Some(100),
+      height: None,
+      scaling_filter: Some(image::imageops::FilterType::Triangle),
+      oversized_handling: None,
+      colour_options: Some(Greyscale),
+    };
+    let processed = process_image(&ImgprssrConfig::default(), img, params);
+    assert_eq!(processed.width(), 100);
+    assert_eq!(processed.height(), 50);
+    // Verify it's greyscale: all pixels should have R == G == B
+    for (_x, _y, pixel) in processed.pixels() {
+      let [r, g, b, _] = pixel.0;
+      assert_eq!(r, g);
+      assert_eq!(g, b);
+    }
   }
 
 }
