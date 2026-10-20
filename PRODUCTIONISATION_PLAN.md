@@ -96,7 +96,7 @@ The service has no request rate limiting, no Content-Security-Policy headers, an
 
 - [x] **1. Fix CI `paths` filter** so tests run on PRs for test file changes and e2e test changes
 - [x] **2. Add tests for test infrastructure** (verify CI discovers and runs tests, e2e suite bootstraps correctly)
-- [ ] **3. Add unit tests for `appconfig.rs`** and `main.rs` handler (TDD)
+- [x] **3. Add unit tests for `appconfig.rs`** and `main.rs` handler (TDD)
 - [ ] **4. Add unit tests for `process.rs`** (oversized handling, filters, combined params) (TDD)
 - [ ] **5. Write path traversal test** (TDD — red)
 - [ ] **6. Fix path traversal vulnerability** (TDD — green)
