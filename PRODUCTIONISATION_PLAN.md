@@ -102,10 +102,10 @@ The service has no request rate limiting, no Content-Security-Policy headers, an
 - [x] **6. Fix path traversal vulnerability** (TDD — green)
 - [x] **7. Write SSRF test** (TDD — red)
 - [x] **8. Fix SSRF vulnerability** on HTTP/HTTPS source (TDD — green)
-- [ ] **9. Add `cargo audit` to CI** (security baseline)
-- [ ] **10. Add `cargo fuzz` / property-based tests** for parameter parsing
-- [ ] **11. Add e2e tests** for error cases, greyscale, formats, edge cases — serves as regression guard before upgrades
-- [ ] **12. Upgrade `image`, `config`, `signal-hook` families** (low risk)
-- [ ] **13. Migrate hyper 0.14 → 1.x** (high effort, high impact)
+- [x] **9. Add `cargo audit` to CI** (security baseline)
+- [x] **10. Add `cargo fuzz` / property-based tests** for parameter parsing
+- [x] **11. Add e2e tests** for error cases, greyscale, formats, edge cases — serves as regression guard before upgrades
+- [x] **12. Upgrade `image`, `config`, `signal-hook` families** (low risk)
+- [x] **13. Migrate hyper 0.14 → 1.x** (high effort, high impact)
 - [ ] **14. Dockerfile hardening** (non-root user, pin exact versions, `.dockerignore`)
 - [ ] **15. Document intentional design choices** (no CORS, no rate limiting — by design)

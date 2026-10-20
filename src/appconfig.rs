@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 
-use hyper::{Client, client::HttpConnector};
+use hyper::Uri;
+use hyper_util::client::legacy::{Client, connect::HttpConnector};
 use hyper_tls::HttpsConnector;
 
 use crate::parameters::{str_to_filter, OversizedImageHandling};
@@ -15,8 +16,8 @@ pub enum ImgprssrConfigErr {
 #[derive(Clone)]
 pub enum ImgSource {
   Folder(String),
-  Https((Client<HttpsConnector<HttpConnector>>, String)),
-  Http((Client<HttpConnector>, String))
+  Https((Client<HttpsConnector<HttpConnector>, String>, String)),
+  Http((Client<HttpConnector, String>, String))
 }
 
 impl PartialEq for ImgSource {
@@ -73,7 +74,7 @@ fn is_private_ip(ip: IpAddr) -> bool {
 /// Validate that an HTTP(S) source URL does not point to a private IP.
 fn validate_http_source(url: &str) -> Result<(), String> {
     use std::str::FromStr;
-    let uri = hyper::Uri::from_str(url).map_err(|e| format!("Invalid URL: {e}"))?;
+    let uri = Uri::from_str(url).map_err(|e| format!("Invalid URL: {e}"))?;
     if let Some(host) = uri.host() {
         if let Ok(ip) = host.parse::<IpAddr>() {
             if is_private_ip(ip) {
@@ -102,14 +103,18 @@ pub fn from_hashmap(hmp: std::collections::HashMap<String, String>) -> Result<Im
             errors.push(e);
         } else {
             let https = HttpsConnector::new();
-            let client = Client::builder().build::<_, hyper::Body>(https);
+            let client = Client::builder(hyper_util::rt::TokioExecutor::new())
+                .build::<_, String>(https);
             config.image_source = ImgSource::Https((client, img_src.to_owned()));
         }
     } else if img_src.starts_with("http://") {
         if let Err(e) = validate_http_source(img_src) {
             errors.push(e);
         } else {
-            config.image_source = ImgSource::Http((Client::new(), img_src.to_owned()));
+            let http = HttpConnector::new();
+            let client = Client::builder(hyper_util::rt::TokioExecutor::new())
+                .build(http);
+            config.image_source = ImgSource::Http((client, img_src.to_owned()));
         }
     } else {
       config.image_source = ImgSource::Folder(img_src.to_owned());
@@ -166,7 +171,8 @@ mod tests {
     let mut cnfg = ImgprssrConfig::default();
     hsmp.insert("image_source".to_owned(), "https://example.com".to_owned());
     let https = HttpsConnector::new();
-    let client = Client::builder().build::<_, hyper::Body>(https);
+    let client = Client::builder(hyper_util::rt::TokioExecutor::new())
+        .build::<_, String>(https);
     cnfg.image_source = ImgSource::Https((client, "https://example.com".to_owned()));
     assert_eq!(from_hashmap(hsmp), Ok(cnfg))
   }
@@ -176,7 +182,9 @@ mod tests {
     let mut hsmp = HashMap::new();
     let mut cnfg = ImgprssrConfig::default();
     hsmp.insert("image_source".to_owned(), "http://example.com".to_owned());
-    let client = Client::new();
+    let http = HttpConnector::new();
+    let client = Client::builder(hyper_util::rt::TokioExecutor::new())
+        .build(http);
     cnfg.image_source = ImgSource::Http((client, "http://example.com".to_owned()));
     assert_eq!(from_hashmap(hsmp), Ok(cnfg))
   }
@@ -207,7 +215,8 @@ mod tests {
     let mut hsmp = HashMap::new();
     hsmp.insert("image_source".to_owned(), "https://example.com/images".to_owned());
     let https = HttpsConnector::new();
-    let client = Client::builder().build::<_, hyper::Body>(https);
+    let client = Client::builder(hyper_util::rt::TokioExecutor::new())
+        .build::<_, String>(https);
     let expected = ImgSource::Https((client, "https://example.com/images".to_owned()));
     assert_eq!(from_hashmap(hsmp).unwrap().image_source, expected);
   }
