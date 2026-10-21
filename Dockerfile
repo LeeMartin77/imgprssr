@@ -37,6 +37,4 @@ USER appuser
 # Expose port (documented as configurable via env)
 EXPOSE 3000
 
-WORKDIR /app
-
 CMD ["/app/imgprssr"]
