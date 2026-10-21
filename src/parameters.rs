@@ -61,19 +61,6 @@ impl FromStr for ScalingFilter {
     }
 }
 
-/// Convert our lightweight enum to the image crate's FilterType.
-impl From<ScalingFilter> for image::imageops::FilterType {
-    fn from(f: ScalingFilter) -> Self {
-        match f {
-            ScalingFilter::Nearest => image::imageops::FilterType::Nearest,
-            ScalingFilter::Gaussian => image::imageops::FilterType::Gaussian,
-            ScalingFilter::CatmullRom => image::imageops::FilterType::CatmullRom,
-            ScalingFilter::Lanczos3 => image::imageops::FilterType::Lanczos3,
-            ScalingFilter::Triangle => image::imageops::FilterType::Triangle,
-        }
-    }
-}
-
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]

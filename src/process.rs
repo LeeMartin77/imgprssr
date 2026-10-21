@@ -3,6 +3,17 @@ use image::DynamicImage;
 
 use crate::{appconfig::ImgprssrConfig, parameters::{OversizedImageHandling, ScalingFilter}};
 
+/// Convert our lightweight ScalingFilter to the image crate's FilterType.
+fn scaling_filter_to_image(filter: ScalingFilter) -> image::imageops::FilterType {
+    match filter {
+        ScalingFilter::Nearest => image::imageops::FilterType::Nearest,
+        ScalingFilter::Gaussian => image::imageops::FilterType::Gaussian,
+        ScalingFilter::CatmullRom => image::imageops::FilterType::CatmullRom,
+        ScalingFilter::Lanczos3 => image::imageops::FilterType::Lanczos3,
+        ScalingFilter::Triangle => image::imageops::FilterType::Triangle,
+    }
+}
+
 pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
   img = process_image(settings, img, params);
   let mut buffer = Cursor::new(Vec::new());
@@ -18,7 +29,7 @@ fn resize_fit_height(img: DynamicImage, height: u32, scaling_filter: ScalingFilt
   if oversize_handling == OversizedImageHandling::Clamp && source_height > height {
     let height_factor = source_height as f32 / height as f32;
     let nwidth = img.width() as f32 * height_factor;
-    return img.resize(nwidth as u32, height, scaling_filter.into());
+    return img.resize(nwidth as u32, height, scaling_filter_to_image(scaling_filter));
   }
   img
 }
@@ -28,7 +39,7 @@ fn resize_fit_width(img: DynamicImage, width: u32, scaling_filter: ScalingFilter
   if oversize_handling == OversizedImageHandling::Clamp && source_width > width {
     let width_factor = source_width as f32 / width as f32;
     let nheight = img.height() as f32 * width_factor;
-    return img.resize(width, nheight as u32, scaling_filter.into());
+    return img.resize(width, nheight as u32, scaling_filter_to_image(scaling_filter));
   }
   img
 }
