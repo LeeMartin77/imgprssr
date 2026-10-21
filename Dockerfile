@@ -25,8 +25,8 @@ RUN apk add --no-cache ca-certificates libssl3
 # Create non-root user and group
 RUN addgroup -S appuser && adduser -S appuser -G appuser
 
-# Create application directories with proper ownership
-RUN mkdir -p /app/images /images && chown -R appuser:appuser /app /images
+# Create images directory with proper ownership for volume mount
+RUN mkdir -p /images && chown appuser:appuser /images
 
 # Copy binary from builder
 COPY --from=builder --chown=appuser:appuser /app/target/release/imgprssr /app/imgprssr
