@@ -34,12 +34,6 @@ let path = Path::new(&full_path);
 
 `target_path` comes directly from the request URI with no sanitisation. A request to `/../../etc/passwd` will escape the image directory. **No validation of `..` or absolute paths.**
 
-### 🟡 Medium — SSRF (HTTP/HTTPS Source)
-
-**File:** `src/source.rs:26-33`
-
-The HTTP/HTTPS source concatenates user-supplied `target_path` to the configured base URL without validation. An attacker could request `http://localhost:2379` (Docker API), `http://169.254.169.254` (cloud metadata), etc. No allowlist or denylist of internal/private IPs.
-
 ### 🟡 Medium — Unhandled Panics
 
 Across `main.rs`, `source.rs`, and `process.rs`, there are **26 `.unwrap()` calls**. Any unexpected input, missing file, or parse failure will panic the entire server. Production services should use proper error propagation and return HTTP error responses.
@@ -100,12 +94,10 @@ The service has no request rate limiting, no Content-Security-Policy headers, an
 - [x] **4. Add unit tests for `process.rs`** (oversized handling, filters, combined params) (TDD)
 - [x] **5. Write path traversal test** (TDD — red)
 - [x] **6. Fix path traversal vulnerability** (TDD — green)
-- [x] **7. Write SSRF test** (TDD — red)
-- [x] **8. Fix SSRF vulnerability** on HTTP/HTTPS source (TDD — green)
-- [x] **9. Add `cargo audit` to CI** (security baseline)
-- [x] **10. Add `cargo fuzz` / property-based tests** for parameter parsing
-- [x] **11. Add e2e tests** for error cases, greyscale, formats, edge cases — serves as regression guard before upgrades
-- [x] **12. Upgrade `image`, `config`, `signal-hook` families** (low risk)
-- [x] **13. Migrate hyper 0.14 → 1.x** (high effort, high impact)
-- [ ] **14. Dockerfile hardening** (non-root user, pin exact versions, `.dockerignore`)
-- [x] **15. Document intentional design choices** (no CORS, no rate limiting — by design)
+- [x] **7. Add `cargo audit` to CI** (security baseline)
+- [x] **8. Add `cargo fuzz` / property-based tests** for parameter parsing
+- [x] **9. Add e2e tests** for error cases, greyscale, formats, edge cases — serves as regression guard before upgrades
+- [x] **10. Upgrade `image`, `config`, `signal-hook` families** (low risk)
+- [x] **11. Migrate hyper 0.14 → 1.x** (high effort, high impact)
+- [x] **12. Dockerfile hardening** (non-root user, pin exact versions, `.dockerignore`)
+- [x] **13. Document intentional design choices** (no CORS, no rate limiting — by design)
