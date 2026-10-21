@@ -29,6 +29,51 @@ impl FromStr for OversizedImageHandling {
     }
 }
 
+// ---------------------------------------------------------------------------
+// ScalingFilter – lightweight enum that replaces image::imageops::FilterType
+// in the parsing layer so that unit tests don't compile the heavy image crate.
+// ---------------------------------------------------------------------------
+
+#[derive(Debug)]
+#[derive(PartialEq)]
+#[derive(Clone)]
+#[derive(Copy)]
+pub enum ScalingFilter {
+  Nearest,
+  Gaussian,
+  CatmullRom,
+  Lanczos3,
+  Triangle,
+}
+
+impl FromStr for ScalingFilter {
+    type Err = ImageParameterParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "nearest" => Ok(ScalingFilter::Nearest),
+            "gaussian" => Ok(ScalingFilter::Gaussian),
+            "catmullrom" => Ok(ScalingFilter::CatmullRom),
+            "lanczos3" => Ok(ScalingFilter::Lanczos3),
+            "triangle" => Ok(ScalingFilter::Triangle),
+            _ => Err(ImageParameterParseError::FilterParseError),
+        }
+    }
+}
+
+/// Convert our lightweight enum to the image crate's FilterType.
+impl From<ScalingFilter> for image::imageops::FilterType {
+    fn from(f: ScalingFilter) -> Self {
+        match f {
+            ScalingFilter::Nearest => image::imageops::FilterType::Nearest,
+            ScalingFilter::Gaussian => image::imageops::FilterType::Gaussian,
+            ScalingFilter::CatmullRom => image::imageops::FilterType::CatmullRom,
+            ScalingFilter::Lanczos3 => image::imageops::FilterType::Lanczos3,
+            ScalingFilter::Triangle => image::imageops::FilterType::Triangle,
+        }
+    }
+}
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 #[derive(Clone)]
@@ -53,20 +98,13 @@ impl FromStr for ColourMode {
 pub struct ImageParameters {
   pub width: Option<u32>,
   pub height: Option<u32>,
-  pub scaling_filter: Option<image::imageops::FilterType>,
+  pub scaling_filter: Option<ScalingFilter>,
   pub oversized_handling: Option<OversizedImageHandling>,
   pub colour_options: Option<ColourMode>
 }
 
-pub fn str_to_filter(filter_string: &str) -> Result<image::imageops::FilterType, ImageParameterParseError> {
-  match filter_string {
-    "nearest" => Ok(image::imageops::FilterType::Nearest),
-    "gaussian" => Ok(image::imageops::FilterType::Gaussian),
-    "catmullrom" => Ok(image::imageops::FilterType::CatmullRom),
-    "lanczos3" => Ok(image::imageops::FilterType::Lanczos3),
-    "triangle" => Ok(image::imageops::FilterType::Triangle),
-    _ => Err(ImageParameterParseError::FilterParseError)
-}
+pub fn str_to_filter(filter_string: &str) -> Result<ScalingFilter, ImageParameterParseError> {
+  filter_string.parse()
 }
 
 impl FromStr for ImageParameters {
@@ -116,7 +154,7 @@ impl FromStr for ImageParameters {
       }
 
       if let Some(filter_string) = params.get("filter") {
-        match str_to_filter(filter_string) {
+        match filter_string.parse::<ScalingFilter>() {
             Ok(flt) => img_params.scaling_filter = Some(flt),
             Err(err) => return Err(err),
         }
@@ -202,11 +240,11 @@ mod tests {
   #[test]
   fn parses_filters() {
     let cases = [
-      (image::imageops::FilterType::Nearest, "nearest"),
-      (image::imageops::FilterType::Gaussian, "gaussian"),
-      (image::imageops::FilterType::CatmullRom, "catmullrom"),
-      (image::imageops::FilterType::Lanczos3, "lanczos3"),
-      (image::imageops::FilterType::Triangle, "triangle")
+      (ScalingFilter::Nearest, "nearest"),
+      (ScalingFilter::Gaussian, "gaussian"),
+      (ScalingFilter::CatmullRom, "catmullrom"),
+      (ScalingFilter::Lanczos3, "lanczos3"),
+      (ScalingFilter::Triangle, "triangle")
     ];
     for (filter_type, filter_string) in cases {
       let test: ImageParameters = format!("filter={}", filter_string).parse().unwrap();

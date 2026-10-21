@@ -1,7 +1,7 @@
 use std::io::{Cursor, Read};
 use image::DynamicImage;
 
-use crate::{appconfig::ImgprssrConfig, parameters::OversizedImageHandling};
+use crate::{appconfig::ImgprssrConfig, parameters::{OversizedImageHandling, ScalingFilter}};
 
 pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage, img_format: image::ImageFormat, params: crate::parameters::ImageParameters) -> Vec<u8> {
   img = process_image(settings, img, params);
@@ -13,28 +13,28 @@ pub fn process_image_to_buffer(settings: &ImgprssrConfig, mut img: DynamicImage,
   out
 }
 
-fn resize_fit_height(img: DynamicImage, height: u32, scaling_filter: image::imageops::FilterType, oversize_handling: OversizedImageHandling) -> DynamicImage {
+fn resize_fit_height(img: DynamicImage, height: u32, scaling_filter: ScalingFilter, oversize_handling: OversizedImageHandling) -> DynamicImage {
   let source_height = img.height();
   if oversize_handling == OversizedImageHandling::Clamp && source_height > height {
     let height_factor = source_height as f32 / height as f32;
     let nwidth = img.width() as f32 * height_factor;
-    return img.resize(nwidth as u32, height, scaling_filter);
+    return img.resize(nwidth as u32, height, scaling_filter.into());
   }
   img
 }
 
-fn resize_fit_width(img: DynamicImage, width: u32, scaling_filter: image::imageops::FilterType, oversize_handling: OversizedImageHandling) -> DynamicImage {
+fn resize_fit_width(img: DynamicImage, width: u32, scaling_filter: ScalingFilter, oversize_handling: OversizedImageHandling) -> DynamicImage {
   let source_width = img.width();
   if oversize_handling == OversizedImageHandling::Clamp && source_width > width {
     let width_factor = source_width as f32 / width as f32;
     let nheight = img.height() as f32 * width_factor;
-    return img.resize(width, nheight as u32, scaling_filter);
+    return img.resize(width, nheight as u32, scaling_filter.into());
   }
   img
 }
 
 
-fn fit_to_set_size(mut img: DynamicImage, width: u32, height: u32, scaling_filter: image::imageops::FilterType, oversize_handling: OversizedImageHandling) -> DynamicImage {
+fn fit_to_set_size(mut img: DynamicImage, width: u32, height: u32, scaling_filter: ScalingFilter, oversize_handling: OversizedImageHandling) -> DynamicImage {
   if oversize_handling == OversizedImageHandling::Clamp && !(img.height() >= height) || !(img.width() >= width) {
     return img;
   }
@@ -83,7 +83,7 @@ mod tests {
 
   use image::GenericImageView;
 
-  use crate::parameters::{ColourMode::Greyscale, ImageParameters};
+  use crate::parameters::{ColourMode::Greyscale, ImageParameters, ScalingFilter};
 
   use super::*;
 
@@ -236,7 +236,7 @@ mod tests {
     let params = ImageParameters {
       width: Some(200),
       height: None,
-      scaling_filter: Some(image::imageops::FilterType::Gaussian),
+      scaling_filter: Some(ScalingFilter::Gaussian),
       oversized_handling: None,
       colour_options: None,
     };
@@ -251,7 +251,7 @@ mod tests {
     let params = ImageParameters {
       width: Some(200),
       height: None,
-      scaling_filter: Some(image::imageops::FilterType::CatmullRom),
+      scaling_filter: Some(ScalingFilter::CatmullRom),
       oversized_handling: None,
       colour_options: None,
     };
@@ -266,7 +266,7 @@ mod tests {
     let params = ImageParameters {
       width: Some(100),
       height: None,
-      scaling_filter: Some(image::imageops::FilterType::Triangle),
+      scaling_filter: Some(ScalingFilter::Triangle),
       oversized_handling: None,
       colour_options: Some(Greyscale),
     };

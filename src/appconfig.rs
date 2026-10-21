@@ -1,10 +1,11 @@
 use hyper_util::client::legacy::{Client, connect::HttpConnector};
 use hyper_tls::HttpsConnector;
 
-use crate::parameters::{str_to_filter, OversizedImageHandling};
+use crate::parameters::ScalingFilter;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub enum ImgprssrConfigErr {
   InvalidValues(Vec<String>)
 }
@@ -32,16 +33,16 @@ impl PartialEq for ImgSource {
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub struct ImgprssrConfig {
-  pub default_filter: image::imageops::FilterType,
-  pub default_oversize_handling: OversizedImageHandling,
+  pub default_filter: ScalingFilter,
+  pub default_oversize_handling: crate::parameters::OversizedImageHandling,
   pub image_source: ImgSource
 }
 
 impl ImgprssrConfig {
   pub fn default() -> ImgprssrConfig {
     ImgprssrConfig {
-      default_filter: image::imageops::FilterType::Nearest,
-      default_oversize_handling: OversizedImageHandling::Clamp,
+      default_filter: ScalingFilter::Nearest,
+      default_oversize_handling: crate::parameters::OversizedImageHandling::Clamp,
       image_source: ImgSource::Folder("./images".to_owned())
     }
   }
@@ -52,7 +53,7 @@ pub fn from_hashmap(hmp: std::collections::HashMap<String, String>) -> Result<Im
   let mut config = ImgprssrConfig::default();
   let mut errors: Vec<String> = vec![];
   if let Some(val) = hmp.get("default_filter") {
-    match str_to_filter(val) {
+    match val.parse::<ScalingFilter>() {
         Ok(fltr) => config.default_filter = fltr,
         Err(_) => errors.push(format!("default_filter::{val}")),
     }
@@ -94,7 +95,7 @@ mod tests {
     let mut hsmp = HashMap::new();
     let mut cnfg = ImgprssrConfig::default();
     hsmp.insert("default_filter".to_owned(), "gaussian".to_owned());
-    cnfg.default_filter = image::imageops::FilterType::Gaussian;
+    cnfg.default_filter = ScalingFilter::Gaussian;
     assert_eq!(from_hashmap(hsmp), Ok(cnfg))
   }
 
