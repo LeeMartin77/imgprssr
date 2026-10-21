@@ -26,7 +26,7 @@ RUN apk add --no-cache ca-certificates libssl3
 RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 # Create application directories with proper ownership
-RUN mkdir -p /app/images && chown -R appuser:appuser /app
+RUN mkdir -p /app/images /images && chown -R appuser:appuser /app /images
 
 # Copy binary from builder
 COPY --from=builder --chown=appuser:appuser /app/target/release/imgprssr /app/imgprssr
