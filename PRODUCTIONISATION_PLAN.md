@@ -1,6 +1,6 @@
 # imgprssr — Productionisation Plan
 
-> **Status:** Draft — not committed to remote
+> **Status:** Committed to `prod/imgprssr` branch
 > **Branch:** `prod/imgprssr`
 
 ---
@@ -108,4 +108,4 @@ The service has no request rate limiting, no Content-Security-Policy headers, an
 - [x] **12. Upgrade `image`, `config`, `signal-hook` families** (low risk)
 - [x] **13. Migrate hyper 0.14 → 1.x** (high effort, high impact)
 - [ ] **14. Dockerfile hardening** (non-root user, pin exact versions, `.dockerignore`)
-- [ ] **15. Document intentional design choices** (no CORS, no rate limiting — by design)
+- [x] **15. Document intentional design choices** (no CORS, no rate limiting — by design)
