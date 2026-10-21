@@ -69,7 +69,7 @@ jobs:
           sudo apt install qemu-user-static
           platarch=linux/amd64
           buildah build --platform=$platarch --manifest imgprssrtest .
-      - run: podman run -d -v ./images:/app/images -p 3000:3000 imgprssrtest
+      - run: podman run -d -v ./images:/images -p 3000:3000 imgprssrtest
       - run: npm ci
         working-directory: ./e2e_tests
       - name: Test Volume Mount
