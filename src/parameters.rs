@@ -292,9 +292,8 @@ mod tests {
 
     use super::*;
 
-    // Reduce test cases for CI speed (default 256 is excessive for unit-level property tests).
+    // Valid filter strings are always parsed successfully.
     proptest! {
-      #[proptest(tests = 16)]
       #[test]
       fn valid_filter_strings_parse(filter in "nearest|gaussian|catmullrom|lanczos3|triangle") {
         let result: Result<ImageParameters, _> = format!("filter={filter}").parse();
@@ -302,7 +301,6 @@ mod tests {
       }
 
       // Invalid filter strings always fail with FilterParseError.
-      #[proptest(tests = 16)]
       #[test]
       fn invalid_filter_strings_fail(filter in "[^a-z]*") {
         let result: Result<ImageParameters, _> = format!("filter={filter}").parse();
@@ -310,7 +308,6 @@ mod tests {
       }
 
       // Valid u32 widths parse successfully.
-      #[proptest(tests = 16)]
       #[test]
       fn valid_width_parses(width in 1u32..=u32::MAX) {
         let result: ImageParameters = format!("width={width}").parse().unwrap();
@@ -318,7 +315,6 @@ mod tests {
       }
 
       // Non-numeric width values always fail.
-      #[proptest(tests = 16)]
       #[test]
       fn non_numeric_width_fails(width in "[^0-9]+") {
         let result: Result<ImageParameters, _> = format!("width={width}").parse();
@@ -326,7 +322,6 @@ mod tests {
       }
 
       // Non-numeric height values always fail.
-      #[proptest(tests = 16)]
       #[test]
       fn non_numeric_height_fails(height in "[^0-9]+") {
         let result: Result<ImageParameters, _> = format!("height={height}").parse();
@@ -334,7 +329,6 @@ mod tests {
       }
 
       // Valid height values parse successfully.
-      #[proptest(tests = 16)]
       #[test]
       fn valid_height_parses(height in 1u32..=u32::MAX) {
         let result: ImageParameters = format!("height={height}").parse().unwrap();
@@ -342,7 +336,6 @@ mod tests {
       }
 
       // Empty query string yields all-None params.
-      #[proptest(tests = 16)]
       #[test]
       fn empty_string_parses_to_none(empty in "[a-z]{0}") {
         let result: ImageParameters = empty.parse().unwrap();
@@ -354,7 +347,6 @@ mod tests {
       }
 
       // Combined width + height parses both.
-      #[proptest(tests = 16)]
       #[test]
       fn combined_width_and_height(width in 1u32..10000u32, height in 1u32..10000u32) {
         let result: ImageParameters = format!("width={width}&height={height}").parse().unwrap();
@@ -363,7 +355,6 @@ mod tests {
       }
 
       // Oversized handling accepts only "clamp".
-      #[proptest(tests = 16)]
       #[test]
       fn valid_oversize_parses(val in "clamp") {
         let result: ImageParameters = format!("oversizehandling={val}").parse().unwrap();
@@ -371,7 +362,6 @@ mod tests {
       }
 
       // Colour accepts only "greyscale".
-      #[proptest(tests = 16)]
       #[test]
       fn valid_colour_parses(val in "greyscale") {
         let result: ImageParameters = format!("colour={val}").parse().unwrap();
@@ -379,7 +369,6 @@ mod tests {
       }
 
       // Boolean-like values for width/height fail.
-      #[proptest(tests = 16)]
       #[test]
       fn boolean_values_for_size_fail(val in "true|false|yes|no|on|off") {
         let w: Result<ImageParameters, _> = format!("width={val}").parse();
@@ -389,7 +378,6 @@ mod tests {
       }
 
       // Negative numbers (parsed as large u32 overflow) fail.
-      #[proptest(tests = 16)]
       #[test]
       fn negative_numbers_fail(val in "-[0-9]+") {
         let w: Result<ImageParameters, _> = format!("width={val}").parse();

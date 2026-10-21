@@ -35,7 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions-rust-lang/setup-rust-toolchain@v2
-      - run: cargo test --verbose
+      - name: Run cargo test
+        env:
+          # Reduce proptest cases from default 256 to 16 for CI speed.
+          # Property-level coverage is still thorough at 16 cases per test.
+          PROPTTEST_CASES: 16
+        run: cargo test --verbose
 
   audit:
     runs-on: ubuntu-latest
