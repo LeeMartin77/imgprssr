@@ -1,1 +1,27 @@
-target
+# Build artefacts
+target/
+
+# Version control
+.git/
+.gitignore
+
+# Documentation (not needed in container)
+*.md
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test / e2e files (not needed at runtime)
+e2e_tests/
+tests/
+Dockerfile-check.sh
+
+# CI configuration
+.github/
+
+# Misc
+.DS_Store
+*.log

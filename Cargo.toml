@@ -7,11 +7,19 @@ rust-version = "1.98"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-config = "0.13.1"
-hyper = { version = "0.14", features = ["full"] }
-hyper-tls = "0.5.0"
+config = "0.15"
+hyper = { version = "1", features = ["full"] }
+hyper-tls = "0.6"
+hyper-util = { version = "0.1", features = ["full"] }
+http-body-util = "0.1"
 tokio = { version = "1", features = ["full"] }
-futures = "0.3.25"
-signal-hook = "0.3.14"
-signal-hook-tokio = { version = "0.3.1", features = ["futures-v0_3"] }
-image = { version = "0.24.5", features = ["webp-encoder"] }
+futures = "0.3"
+signal-hook = "0.4"
+signal-hook-tokio = { version = "0.4", features = ["futures-v0_3"] }
+image = { version = "0.25", features = ["webp"] }
+bytes = "1"
+urlencoding = "2"
+
+[dev-dependencies]
+temp-env = "0.3"
+proptest = "1"

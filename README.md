@@ -97,6 +97,20 @@ I'm not actively looking for contributions on this since it's such a thin projec
 
 If you use this project, I'd _love_ to hear where you used it! You can reach me a [hello@leejohnmartin.co.uk](mailto:hello@leejohnmartin.co.uk).
 
+## Design Decisions
+
+### No CORS Headers
+
+This service does not set `Access-Control-Allow-Origin` or any CORS headers. It is designed to be deployed behind a reverse proxy (nginx, Caddy, Traefik, etc.) which can handle CORS configuration at the edge. Adding CORS in the application itself would couple deployment topology to the service, making it harder to use in different environments (e.g. internal clusters, air-gapped deployments).
+
+### No Rate Limiting
+
+This service does not implement request rate limiting. It is intended for controlled environments where the operator can enforce rate limits at the infrastructure level (reverse proxy, load balancer, or service mesh). Adding rate limiting in the application would increase complexity and resource usage for a feature that is more effectively implemented at the network boundary.
+
+### Minimal Surface Area
+
+imgprssr is intentionally lean — it loads images, resizes them, and returns the result. It does not include authentication, logging, metrics, or health endpoints. If these features are needed, deploy behind a reverse proxy or sidecar that provides them.
+
 ## Other Notes
 
 Test card image lifted from [SVGtestcard](https://github.com/edent/SVGtestcard)
