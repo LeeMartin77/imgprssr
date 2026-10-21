@@ -23,8 +23,8 @@ describe("Edge Case Tests", () => {
     expect(res.status).toBe(200);
     const imgBuffer = Buffer.from(await res.arrayBuffer());
     const size = sizeOf(imgBuffer);
-    // Image will be upscaled (Clamp mode allows upscaling)
-    expect(size.width).toBe(4000);
+    // Clamp mode prevents upscaling — 1280 < 4000, so image stays at original width
+    expect(size.width).toBe(1280);
   });
 
   test("large height", async () => {
@@ -32,7 +32,8 @@ describe("Edge Case Tests", () => {
     expect(res.status).toBe(200);
     const imgBuffer = Buffer.from(await res.arrayBuffer());
     const size = sizeOf(imgBuffer);
-    expect(size.height).toBe(4000);
+    // Clamp mode prevents upscaling — 720 < 4000, so image stays at original height
+    expect(size.height).toBe(720);
   });
 
   test("both dimensions specified", async () => {
